@@ -1,24 +1,21 @@
-__pycache__
-*weights/*
-*processed.*
-*output*
-*flagged*
-*temp*
-PytorchWildlife.egg-info/
-*dev*
-*test*
-*setup/*
-*dist/*
-*VSCodeCounter*
-*build/*
-*bee*
-*Bee*
-*debug*
-*annotations.csv
-*cropped_resized*
-*log*
-*.ckpt
-*.pt
+################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+
+__pycache__/
+*.py[cod]
+*$py.class
+# Jupyter Notebook
+.ipynb_checkpoints
+
 *.pth
-demo/demo_data/imgs/other_extensions/
-demo/folder_separation/
+*.so
+*.o
+
+# Apple directory 
+*.DS_Store
+
+# IDE
+*.idea/
+
