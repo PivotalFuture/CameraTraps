@@ -327,6 +327,10 @@ from databases import sanity_check_json_db
 
 sanity_check_json_db.sanityCheckJsonDb(outputFile, imageBaseDir)
 
+from databases import sanity_check_json_db
+
+sanity_check_json_db.sanityCheckJsonDb(outputFile, imageBaseDir)
+
 #%% One-time processing step: copy images to a flat directory for annotation
 
 if False:
