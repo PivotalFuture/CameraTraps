@@ -318,22 +318,14 @@ print('Finished writing .json file with {} images, {} annotations, and {} catego
 
 #%% Check database integrity
 
-options = sanity_check_json_db.SanityCheckOptions()
-options.baseDir = imageBaseDir
-options.bCheckImageSizes = False
-options.bFindUnusedImages = False
-sanity_check_json_db.sanity_check_json_db(outputFile, options)
+p = os.path.join(os.getcwd(),'database_tools')
+import sys
+if (p not in sys.path):
+    sys.path.append(p)
 
+from databases import sanity_check_json_db
 
-#%% Preview a few images to make sure labels were passed along sensibly
-
-db_path = outputFile
-output_dir = os.path.join(baseDir,'label_preview')
-image_base_dir = imageBaseDir
-options = visualize_db.DbVizOptions()
-options.num_to_visualize = 100
-htmlOutputFile = visualize_db.process_images(db_path,output_dir,image_base_dir,options)
-    
+sanity_check_json_db.sanityCheckJsonDb(outputFile, imageBaseDir)
 
 #%% One-time processing step: copy images to a flat directory for annotation
 

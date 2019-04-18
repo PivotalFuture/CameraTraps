@@ -133,7 +133,6 @@ def integrity_check_json_db(jsonFile, options=None):
     imageIdToImage = {}
     annIdToAnn = {}
     catIdToCat = {}
-    catNameToCat = {}
     imageLocationSet = set()
     
     print('Checking categories...')
@@ -200,14 +199,8 @@ def integrity_check_json_db(jsonFile, options=None):
         if 'width' in image:
             assert 'height' in image, 'Image with width but no height: {}'.format(image['id'])
 
-        if options.bRequireLocation:
-            assert 'location' in image, 'No location available for: {}'.format(image['id'])
-            
         if 'location' in image:
-            # We previously supported ints here; this should be strings now
-            # assert isinstance(image['location'], str) or isinstance(image['location'], int), \
-            #  'Illegal image location type'
-            assert isinstance(image['location'], str)
+            assert isinstance(image['location'], str) or isinstance(image['location'], int), 'Illegal image location type'
             imageLocationSet.add(image['location'])
     
         if 'seq_id' in image:
@@ -335,12 +328,8 @@ def integrity_check_json_db(jsonFile, options=None):
     
     print('Found {} unused categories'.format(nUnusedCategories))
             
-    sequenceString = 'no sequence info'
-    if len(sequences) > 0:
-        sequenceString = '{} sequences'.format(len(sequences))
-        
-    print('\nDB contains {} images, {} annotations, {} bboxes, {} categories, {}\n'.format(
-            len(images),len(annotations),nBoxes,len(categories),sequenceString))
+    print('\nDB contains {} images, {} annotations, and {} categories\n'.format(
+            len(images),len(annotations),len(categories)))
 
     if len(imageLocationSet) > 0:
         print('DB contains images from {} locations\n'.format(len(imageLocationSet)))

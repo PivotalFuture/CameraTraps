@@ -1,9 +1,8 @@
 import json
-import pickle
 import numpy as np
 from create_tfrecords import create
-from create_tfrecords_format import create_tfrecords_format
-from create_classification_tfrecords_format import create_classification_tfrecords_format
+from create_tfrecords_from_json import create_tfrecords_from_json
+from archive.data_management.tfrecords.create_classification_tfrecords_format import create_classification_tfrecords_from_json
 import tensorflow as tf
 
 datafolder = '/ai4efs/'
