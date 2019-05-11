@@ -1,11 +1,13 @@
 import copy
 import io
 import os
+import pickle
 from collections import defaultdict
 from datetime import datetime, timedelta
 import json
 
 import azureml.core
+import pandas as pd
 from azure.storage.blob import BlockBlobService, BlobPermissions
 from azureml.core import Workspace, Experiment
 from azureml.core.authentication import ServicePrincipalAuthentication
@@ -21,6 +23,7 @@ import api_config
 from sas_blob_utils import SasBlob
 
 print('Version of AML: {}'.format(azureml.core.__version__))
+
 
 # Service principle authentication for AML
 svc_pr_password = os.environ.get('AZUREML_PASSWORD')
@@ -158,7 +161,7 @@ class AMLCompute:
 
             batch_score_step = PythonScriptStep(aml_config['script_name'],
                                                 source_directory=aml_config['source_dir'],
-                                                hash_paths=['.'],  # include all contents of source_directory
+                                                hash_paths= ['.'],  # include all contents of source_directory
                                                 name='batch_scoring',
                                                 arguments=['--job_id', param_job_id,
                                                            '--model_name', model_name,

@@ -1,3 +1,5 @@
+print('score.py, beginning - megadetector_v3')
+
 import argparse
 import io
 import json

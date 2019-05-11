@@ -165,26 +165,13 @@ class TFDetector:
                         # apply the confidence threshold
                         boxes, scores, classes = b_box[i], b_score[i], b_class[i]
                         detections_cur_image = []  # will be empty for an image with no confident detections
-                        max_detection_conf = 0.0
+
                         for b, s, c in zip(boxes, scores, classes):
                             if s > detection_threshold:
-                                detection_entry = {
-                                    'category': str(int(c)),  # use string type for the numerical class label, not int
-                                    'conf': round(float(s), CONF_DIGITS),  # cast to float for json serialization
-                                    'bbox': TFDetector.convert_coords(b)
-                                }
-                                detections_cur_image.append(detection_entry)
-                                if s > max_detection_conf:
-                                    max_detection_conf = s
-
-                        detection = {
-                            'file': image_id,
-                            'max_detection_conf': round(float(max_detection_conf), CONF_DIGITS),
-                            'detections': detections_cur_image
-                        }
-                        if metadata_available:
-                            detection['meta'] = image_meta
-                        detections.append(detection)
+                                li = TFDetector.convert_numpy_floats(b)
+                                li.append(float(s))
+                                li.append(int(c))
+                                detections_cur_image.append(li)
 
                 except Exception as e:
                     failed_images.extend(image_id_batch)

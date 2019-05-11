@@ -60,10 +60,6 @@ parser.add_argument('-w', '--output_image_width', type=int,
                           'Use -1 to not resize.'),
                     default=700)
 
-parser.add_argument('-r', '--random_seed', type=int,
-                    help=('an integer to seed random so that the sample of images drawn is deterministic'),
-                    default=None)
-
 args = parser.parse_args()
 print('Options to the script: ')
 print(args)
@@ -88,10 +84,10 @@ os.makedirs(args.out_dir, exist_ok=True)
 
 #%% Helper functions and constants
 
-DEFAULT_DETECTOR_LABEL_MAP = {
-    '1': 'animal',
-    '2': 'person',
-    '4': 'vehicle' # will be available in megadetector v4
+DETECTOR_LABEL_MAP = {
+    1: 'animal',
+    2: 'person',
+    3: 'vehicle' # will be available in megadetector v4
 }
 
 def get_sas_key_from_uri(sas_uri):
@@ -172,6 +168,8 @@ for entry in tqdm(images):
             print('Image {} is not found at local images_dir; skipped.'.format(image_id))
             continue
     else:
+        print('image_id:', image_id)
+        print('container_name:', container_name)
         if not blob_service.exists(container_name, blob_name=image_id):
             print('Image {} is not found in the blob container {}; skipped.'.format(image_id, container_name))
             continue
@@ -182,10 +180,10 @@ for entry in tqdm(images):
     # resize is for displaying them more quickly
     image = vis_utils.resize_image(vis_utils.open_image(image_obj), args.output_image_width)
 
-    vis_utils.render_detection_bounding_boxes(detections, image, label_map=detector_label_map,
+    vis_utils.render_detection_bounding_boxes(boxes_and_scores, image, label_map=DETECTOR_LABEL_MAP,
                                               confidence_threshold=args.confidence)
 
-    annotated_img_name = 'anno_' + image_id.replace('/', '~').replace('\\', '~')
+    annotated_img_name = image_id.replace('/', '~').replace('\\', '~')
     annotated_img_path = os.path.join(args.out_dir, annotated_img_name)
     image.save(annotated_img_path)
     num_saved += 1

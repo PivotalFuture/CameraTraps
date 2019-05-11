@@ -467,7 +467,7 @@ def render_iMerit_boxes(boxes, classes, image,
         display_strs.append([clss])
 
     display_boxes = np.array(display_boxes)
-    draw_bounding_boxes_on_image(image, display_boxes, display_str_list_list=display_strs)
+    draw_bounding_boxes_on_image(image, display_boxes, classes, display_str_list_list=display_strs)
 
 
 def render_db_bounding_boxes(boxes, classes, image, image_size, label_map=None):
@@ -491,40 +491,152 @@ def render_db_bounding_boxes(boxes, classes, image, image_size, label_map=None):
         display_strs.append([clss])
 
     display_boxes = np.array(display_boxes)
-    draw_bounding_boxes_on_image(image, display_boxes, classes, display_str_list_list=display_strs)
+    draw_bounding_boxes_on_image(image, display_boxes, classes, display_str_list_list=display_strs, thickness=thickness)
 
 
-def render_db_bounding_boxes(boxes, classes, image, image_size, label_map=None):
+def render_detection_bounding_boxes(boxes_scores_classes, image, label_map={}, confidence_threshold=0.5, thickness=4):
+    """
+    Renders bounding boxes, label and confidence on an image if confidence is above the threshold.
+    This is works with the output of the detector batch processing API.
+
+    Args:
+        boxes, scores, classes:  outputs of generate_detections.
+        image: PIL.Image object, output of generate_detections.
+        label_map: optional, mapping the numerical label to a string name.
+        confidence_threshold: threshold above which the bounding box is rendered.
+
+    image is modified in place!
+    """
     display_boxes = []
-    display_strs = []
-    classes = []  # ints, for selecting colors
+    display_strs = []  # list of list, one list of strings for each bounding box (to accommodate multiple labels)
+    classes = []
+    for detection in boxes_scores_classes:
+        score = detection[4]
+        if score > confidence_threshold:
+            display_boxes.append(detection[:4])
 
-    for b in boxes_info:
-        x_rel, y_rel, w_rel, h_rel = b['bbox']
-        ymin, xmin = y_rel, x_rel
-        ymax = ymin + h_rel
-        xmax = xmin + w_rel
-        display_boxes.append([ymin, xmin, ymax, xmax])
-        display_strs.append([b['category']])
-        classes.append(annotation_constants.detector_bbox_category_name_to_id[b['category']])
+            if len(detection) < 6:
+                clss = 1  # megadetector_v2 outputs contain only the animal class
+            else:
+                clss = int(detection[5])
+
+            label = label_map[clss] if clss in label_map else str(clss)
+            displayed_label = '{}: {}%'.format(label, round(100 * score))
+            display_strs.append([displayed_label])
+            classes.append(clss)
 
     display_boxes = np.array(display_boxes)
-    draw_bounding_boxes_on_image(image, display_boxes, classes, display_strs=display_strs)
+
+    draw_bounding_boxes_on_image(image, display_boxes, classes,
+                                 display_str_list_list=display_strs, thickness=thickness)
 
 
-def render_db_bounding_boxes(boxes, classes, image, original_size=None,
-                             label_map=None, thickness=4, expansion=0):
+# the following functions are modified versions of those at
+# https://github.com/tensorflow/models/blob/master/research/object_detection/utils/visualization_utils.py
+
+COLORS = [
+    'AliceBlue', 'Red', 'RoyalBlue', 'Gold', 'Chartreuse', 'Aqua',  'Azure', 'Beige', 'Bisque',
+    'BlanchedAlmond', 'BlueViolet', 'BurlyWood', 'CadetBlue', 'AntiqueWhite',
+    'Chocolate', 'Coral', 'CornflowerBlue', 'Cornsilk', 'Crimson', 'Cyan',
+    'DarkCyan', 'DarkGoldenRod', 'DarkGrey', 'DarkKhaki', 'DarkOrange',
+    'DarkOrchid', 'DarkSalmon', 'DarkSeaGreen', 'DarkTurquoise', 'DarkViolet',
+    'DeepPink', 'DeepSkyBlue', 'DodgerBlue', 'FireBrick', 'FloralWhite',
+    'ForestGreen', 'Fuchsia', 'Gainsboro', 'GhostWhite', 'GoldenRod',
+    'Salmon', 'Tan', 'HoneyDew', 'HotPink', 'IndianRed', 'Ivory', 'Khaki',
+    'Lavender', 'LavenderBlush', 'LawnGreen', 'LemonChiffon', 'LightBlue',
+    'LightCoral', 'LightCyan', 'LightGoldenRodYellow', 'LightGray', 'LightGrey',
+    'LightGreen', 'LightPink', 'LightSalmon', 'LightSeaGreen', 'LightSkyBlue',
+    'LightSlateGray', 'LightSlateGrey', 'LightSteelBlue', 'LightYellow', 'Lime',
+    'LimeGreen', 'Linen', 'Magenta', 'MediumAquaMarine', 'MediumOrchid',
+    'MediumPurple', 'MediumSeaGreen', 'MediumSlateBlue', 'MediumSpringGreen',
+    'MediumTurquoise', 'MediumVioletRed', 'MintCream', 'MistyRose', 'Moccasin',
+    'NavajoWhite', 'OldLace', 'Olive', 'OliveDrab', 'Orange', 'OrangeRed',
+    'Orchid', 'PaleGoldenRod', 'PaleGreen', 'PaleTurquoise', 'PaleVioletRed',
+    'PapayaWhip', 'PeachPuff', 'Peru', 'Pink', 'Plum', 'PowderBlue', 'Purple',
+    'RosyBrown', 'Aquamarine', 'SaddleBrown', 'Green', 'SandyBrown',
+    'SeaGreen', 'SeaShell', 'Sienna', 'Silver', 'SkyBlue', 'SlateBlue',
+    'SlateGray', 'SlateGrey', 'Snow', 'SpringGreen', 'SteelBlue', 'GreenYellow',
+    'Teal', 'Thistle', 'Tomato', 'Turquoise', 'Violet', 'Wheat', 'White',
+    'WhiteSmoke', 'Yellow', 'YellowGreen'
+]
+
+
+def draw_bounding_boxes_on_image(image,
+                                 boxes,
+                                 classes,
+                                 thickness=1,
+                                 display_str_list_list=()):
     """
-    Render bounding boxes (with class labels) on [image].  This is a wrapper for
-    draw_bounding_boxes_on_image, allowing the caller to operate on a resized image
-    by providing the original size of the image; bboxes will be scaled accordingly.
+    Draws bounding boxes on image.
+
+    Args:
+      image: a PIL.Image object.
+      boxes: a 2 dimensional numpy array of [N, 4]: (ymin, xmin, ymax, xmax).
+             The coordinates are in normalized format between [0, 1].
+      thickness: line thickness. Default value is 4.
+      display_str_list_list: list of list of strings.
+                             a list of strings for each bounding box.
+                             The reason to pass a list of strings for a
+                             bounding box is that it might contain
+                             multiple labels.
     """
+    boxes_shape = boxes.shape
+    if not boxes_shape:
+        return
+    if len(boxes_shape) != 2 or boxes_shape[1] != 4:
+        # print('Input must be of size [N, 4], but is ' + str(boxes_shape))
+        return  # no object detection on this image, return
+    for i in range(boxes_shape[0]):
+        if display_str_list_list:
+            display_str_list = display_str_list_list[i]
+            draw_bounding_box_on_image(image,
+                                       boxes[i, 0], boxes[i, 1], boxes[i, 2], boxes[i, 3],
+                                       classes[i],
+                                       thickness=thickness, display_str_list=display_str_list)
 
     display_boxes = []
     display_strs = []
 
-    if original_size is not None:
-        image_size = original_size
+def draw_bounding_box_on_image(image,
+                               ymin,
+                               xmin,
+                               ymax,
+                               xmax,
+                               clss,
+                               thickness=4,
+                               display_str_list=(),
+                               use_normalized_coordinates=True):
+    """Adds a bounding box to an image.
+
+    Bounding box coordinates can be specified in either absolute (pixel) or
+    normalized coordinates by setting the use_normalized_coordinates argument.
+
+    Each string in display_str_list is displayed on a separate line above the
+    bounding box in black text on a rectangle filled with the input 'color'.
+    If the top of the bounding box extends to the edge of the image, the strings
+    are displayed below the bounding box.
+
+    Args:
+      image: a PIL.Image object.
+      ymin: ymin of bounding box.
+      xmin: xmin of bounding box.
+      ymax: ymax of bounding box.
+      xmax: xmax of bounding box.
+      clss: int, the class of the object in this bounding box.
+      thickness: line thickness. Default value is 4.
+      display_str_list: list of strings to display in box
+                        (each to be shown on its own line).
+      use_normalized_coordinates: If True (default), treat coordinates
+        ymin, xmin, ymax, xmax as relative to the image.  Otherwise treat
+        coordinates as absolute.
+    """
+    color = COLORS[int(clss) % len(COLORS)]
+
+    draw = ImageDraw.Draw(image)
+    im_width, im_height = image.size
+    if use_normalized_coordinates:
+        (left, right, top, bottom) = (xmin * im_width, xmax * im_width,
+                                      ymin * im_height, ymax * im_height)
     else:
         image_size = image.size
 
@@ -535,16 +647,23 @@ def render_db_bounding_boxes(boxes, classes, image, original_size=None,
         ymin = y_min_abs / img_height
         ymax = ymin + height_abs / img_height
 
-        xmin = x_min_abs / img_width
-        xmax = xmin + width_abs / img_width
+    if top > total_display_str_height:
+        text_bottom = top
+    else:
+        text_bottom = bottom + total_display_str_height
+    # Reverse list and print from bottom to top.
+    for display_str in display_str_list[::-1]:
+        text_width, text_height = font.getsize(display_str)
+        margin = np.ceil(0.05 * text_height)
 
-        display_boxes.append([ymin, xmin, ymax, xmax])
 
-        if label_map:
-            clss = label_map[int(clss)]
-        display_strs.append([clss])
-
-    display_boxes = np.array(display_boxes)
-    draw_bounding_boxes_on_image(image, display_boxes, classes, display_strs=display_strs,
-                                 thickness=thickness, expansion=expansion)
-    
+        draw.rectangle(
+            [(left, text_bottom - text_height - 2 * margin), (left + text_width,
+                                                              text_bottom)],
+            fill=color)
+        draw.text(
+            (left + margin, text_bottom - text_height - margin),
+            display_str,
+            fill='black',
+            font=font)
+        text_bottom -= text_height - 2 * margin
