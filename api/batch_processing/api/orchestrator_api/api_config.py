@@ -1,3 +1,5 @@
+import json
+
 # name of the container in the internal storage account to store user facing files:
 # image list, detection results and failed images list.
 INTERNAL_CONTAINER = 'async-api-v3-2'
@@ -6,7 +8,7 @@ INTERNAL_CONTAINER = 'async-api-v3-2'
 AML_CONTAINER = 'aml-out-2'
 
 # how often does the checking thread wake up to check if all jobs are done
-MONITOR_PERIOD_MINUTES = 15
+MONITOR_PERIOD_MINUTES = 5
 
 # if this number of times the thread wakes up to check is exceeded, stop the monitoring thread
 MAX_MONITOR_CYCLES = 4 * 7 * int((60 * 24) / MONITOR_PERIOD_MINUTES)  # 4 weeks
@@ -60,7 +62,7 @@ SUPPORTED_MODEL_VERSIONS = sorted([k for k in AML_CONFIG['models']])
 MAX_BLOBS_IN_OUTPUT_CONTAINER = 1000 * 1000
 
 # URLs to the 3 output files expires after this many days
-EXPIRATION_DAYS = 30
+EXPIRATION_DAYS = 14
 
 DETECTION_CATEGORIES = {
     '1': 'animal',
