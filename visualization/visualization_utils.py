@@ -494,13 +494,68 @@ def render_db_bounding_boxes(boxes, classes, image, image_size, label_map=None):
     draw_bounding_boxes_on_image(image, display_boxes, classes, display_str_list_list=display_strs, thickness=thickness)
 
 
-def render_detection_bounding_boxes(boxes_scores_classes, image, label_map={}, confidence_threshold=0.5, thickness=4):
+def render_detection_bounding_boxes(detections, image,
+                                    label_map={},
+                                    confidence_threshold=0.8, thickness=4):
     """
     Renders bounding boxes, label and confidence on an image if confidence is above the threshold.
     This is works with the output of the detector batch processing API.
 
     Args:
-        boxes, scores, classes:  outputs of generate_detections.
+        detections: detections on the image, example content:
+        {
+            "category": "2",
+            "conf": 0.996,
+            "bbox": [
+                0.0,
+                0.2762,
+                0.9539,
+                0.9825
+            ]
+        }
+        image: PIL.Image object, output of generate_detections.
+        label_map: optional, mapping the numerical label to a string name. The type of the numerical label
+            (default string) needs to be consistent with the keys in label_map; no casting is carried out.
+        confidence_threshold: optional, threshold above which the bounding box is rendered.
+        thickness: optional, rendering line thickness.
+        color_map: optional, mapping the numerical label to bbox color.
+
+    image is modified in place!
+    """
+    display_boxes = []
+    display_strs = []  # list of lists, one list of strings for each bounding box (to accommodate multiple labels)
+    classes = []
+
+    for detection in detections:
+
+        score = detection['conf']
+        if score > confidence_threshold:
+            display_boxes.append(detection['bbox'])
+            clss = detection['category']
+            label = label_map[clss] if clss in label_map else clss
+            displayed_label = '{}: {}%'.format(label, round(100 * score))
+            display_strs.append([displayed_label])
+            classes.append(clss)
+
+    display_boxes = np.array(display_boxes)
+
+    draw_bounding_boxes_on_image(image, display_boxes, classes,
+                                 display_strs=display_strs, thickness=thickness)
+
+
+def render_detection_bounding_boxes_old(boxes_scores_classes, image,
+                                        label_map=annotation_constants.bbox_category_id_to_name,
+                                        confidence_threshold=0.8, thickness=4):
+    """
+    Renders bounding boxes, label and confidence on an image if confidence is above the threshold.
+    This is works with the output of the detector batch processing API (version 1.0).
+
+    Args:
+        boxes_and_scores:  outputs of generate_detections, in one of the following formats
+        
+            [x_rel, y_rel, w_rel, h_rel, p]
+            [x_rel, y_rel, w_rel, h_rel, p, class]
+            
         image: PIL.Image object, output of generate_detections.
         label_map: optional, mapping the numerical label to a string name.
         confidence_threshold: threshold above which the bounding box is rendered.
@@ -640,9 +695,10 @@ def draw_bounding_box_on_image(image,
     else:
         image_size = image.size
 
-    img_width, img_height = image_size
-    for box, clss in zip(boxes, classes):
-        x_min_abs, y_min_abs, width_abs, height_abs = box
+    try:
+        font = ImageFont.truetype('arial.ttf', 32)
+    except IOError:
+        font = ImageFont.load_default()
 
         ymin = y_min_abs / img_height
         ymax = ymin + height_abs / img_height

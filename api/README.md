@@ -21,3 +21,6 @@ This API runs the detector on up to 2 million images in one request using [Azure
 
 The [batch_processing](batch_processing) folder includes the API itself, tools for working with the results the API generates, and support for integrating our API output with other tools.
 
+Upcoming improvements:
+- [ ] Adapt `runserver.py` to use the newest version of the AI4E API Framework
+- [ ] More checks on the input container and image list SAS keys
