@@ -134,6 +134,7 @@ def _request_detections(**kwargs):
         if model_version == '':
             model_version = api_config.AML_CONFIG['default_model_version']
         model_name = api_config.AML_CONFIG['models'][model_version]
+        print('runserver.py, model_version to use is {}, model_name is'.format(model_version, model_name))
 
         # request_name and request_submission_timestamp are for appending to output file names
         request_name = body.get('request_name', '')
