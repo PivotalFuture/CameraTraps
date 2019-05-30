@@ -183,5 +183,5 @@ options = visualize_bbox_db.BboxDbVizOptions()
 options.num_to_visualize = 1000
 options.sort_by_filename = False
 
-htmlOutputFile = visualize_bbox_db.process_images(bbox_db_path,output_dir,image_base,options)
+htmlOutputFile = visualize_bbox_db.processImages(bbox_db_path,output_dir,image_base,options)
 
