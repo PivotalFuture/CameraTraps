@@ -58,13 +58,13 @@ class SuspiciousDetectionOptions:
     outputBase = ''
     
     # Don't consider detections with confidence lower than this as suspicious
-    confidenceMin = 0.85
+    confidenceMin = 0.849
     
     # Don't consider detections with confidence higher than this as suspicious
-    confidenceMax = 0.95
-    
+    confidenceMax = 1.0
+
     # What's the IOU threshold for considering two boxes the same?
-    iouThreshold = 0.95
+    iouThreshold = 0.9
     
     # How many occurrences of a single location (as defined by the IOU threshold)
     # are required before we declare it suspicious?
@@ -83,6 +83,10 @@ class SuspiciousDetectionOptions:
     # Load detections from a filter file rather than finding them from the detector output
     filterFileToLoad = ''
     
+    # (optional) list of filenames remaining after deletion
+    filteredFileListToLoad = None
+    
+    # Turn on/off optional outputs
     bRenderHtml = False
     
     debugMaxDir = -1
