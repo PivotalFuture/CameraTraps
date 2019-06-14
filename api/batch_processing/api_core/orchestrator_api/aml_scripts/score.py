@@ -76,21 +76,6 @@ class BatchScorer:
         print('BatchScorer, download_images(), use_url is {}, metadata_available is {}'.format(
             self.use_url, self.metadata_available))
 
-        if not self.use_url:
-            print('blob_service created')
-            blob_service = BlockBlobService(
-                account_name=BatchScorer.get_account_from_uri(self.input_container_sas),
-                sas_token=BatchScorer.get_sas_key_from_uri(self.input_container_sas))
-            container_name = BatchScorer.get_container_from_uri(self.input_container_sas)
-
-        for i in self.image_ids_to_score:
-            if self.metadata_available:
-                image_id = i[0]
-                image_meta = i[1]
-            else:
-                image_id = i
-                image_meta = None
-
         for image_id in self.image_ids_to_score:
             try:
                 if self.use_url:

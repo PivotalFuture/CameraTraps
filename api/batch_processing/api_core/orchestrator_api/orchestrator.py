@@ -49,6 +49,7 @@ def get_task_status(request_status, message):
         'message': message
     }
 
+
 def check_data_container_sas(sas_uri):
     permissions = SasBlob.get_permissions_from_uri(sas_uri)
     if 'read' not in permissions or 'list' not in permissions:
