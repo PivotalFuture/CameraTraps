@@ -67,10 +67,29 @@ class TFDetector:
         return image.resize((width, height))  # PIL is lazy, so image only loaded here, not in open_image()
 
     @staticmethod
-    def convert_numpy_floats_coords(np_array):
-        new = []
-        for i in np_array:
-            new.append(round(float(i), COORD_DIGITS))
+    def round_and_make_float(d):
+        return round(float(d), COORD_DIGITS)
+
+    @staticmethod
+    def convert_coords(np_array):
+        """ Two functionalities: convert the numpy floats to Python floats, and also change the coordinates from
+        [y1, x1, y2, x2] to [x1, y1, width_box, height_box] (in relative coordinates still).
+
+        Args:
+            np_array: array of predicted bounding box coordinates from the TF detector
+
+        Returns: array of predicted bounding box coordinates as Python floats and in [x1, y1, width_box, height_box]
+
+        """
+        # change from [y1, x1, y2, x2] to [x1, y1, width_box, height_box]
+        width_box = np_array[3] - np_array[1]
+        height_box = np_array[2] - np_array[0]
+
+        new = [np_array[1], np_array[0], width_box, height_box]  # cannot be a numpy array; needs to be a list
+
+        # convert numpy floats to Python floats
+        for i, d in enumerate(new):
+            new[i] = TFDetector.round_and_make_float(d)
         return new
 
     def _generate_detections_batch(self, images, sess, image_tensor, box_tensor, score_tensor, class_tensor):
@@ -102,9 +121,11 @@ class TFDetector:
             detections: list of detection entries with fields
                 'category': str, numerical class label
                 'conf': float rounded to CONF_DIGITS decimal places, score/confidence of the detection
-                'bbox': list of floats rounded to COORD_DIGITS decimal places, relative coordinates [y1, x1, y2, x2]
+                'bbox': list of floats rounded to COORD_DIGITS decimal places, relative coordinates
+                        [x, y, width_box, height_box]
             image_ids_completed: list of image_ids that were successfully processed
-            failed_images_during_detection: list of image_ids that failed to process
+            failed_images: list of image_ids for images that failed to process
+            failed_metas: list of image_metas for images that failed to process
         """
 
         # number of images should be small - all are loaded at once and a copy of resized version exists at one point
@@ -150,18 +171,21 @@ class TFDetector:
                                 detection_entry = {
                                     'category': str(int(c)),  # use string type for the numerical class label, not int
                                     'conf': round(float(s), CONF_DIGITS),  # cast to float for json serialization
-                                    'bbox': TFDetector.convert_numpy_floats_coords(b)
+                                    'bbox': TFDetector.convert_coords(b)
                                 }
                                 detections_cur_image.append(detection_entry)
                                 if s > max_detection_conf:
                                     max_detection_conf = s
 
-                        detections.append({
+                        detection = {
                             'file': image_id,
                             'max_detection_conf': round(float(max_detection_conf), CONF_DIGITS),
                             'detections': detections_cur_image
-                        })
-                        image_ids_completed.append(image_id)
+                        }
+                        if metadata_available:
+                            detection['meta'] = image_meta
+                        detections.append(detection)
+
                 except Exception as e:
                     failed_images.extend(image_id_batch)
                     failed_metas.extend(image_meta_batch)

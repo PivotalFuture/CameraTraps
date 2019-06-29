@@ -15,6 +15,7 @@ from tf_detector import TFDetector
 
 print('score.py, beginning, using AML version {}'.format(azureml.core.__version__))
 
+
 class BatchScorer:
 
     def __init__(self, **kwargs):
@@ -32,6 +33,7 @@ class BatchScorer:
         self.batch_size = kwargs.get('batch_size')
 
         self.image_ids_to_score = kwargs.get('image_ids_to_score')
+        self.use_url = kwargs.get('use_url')
         self.images = []
 
         # determine if there is metadata attached to each image_id
@@ -76,7 +78,21 @@ class BatchScorer:
         print('BatchScorer, download_images(), use_url is {}, metadata_available is {}'.format(
             self.use_url, self.metadata_available))
 
-        for image_id in self.image_ids_to_score:
+        if not self.use_url:
+            print('blob_service created')
+            blob_service = BlockBlobService(
+                account_name=BatchScorer.get_account_from_uri(self.input_container_sas),
+                sas_token=BatchScorer.get_sas_key_from_uri(self.input_container_sas))
+            container_name = BatchScorer.get_container_from_uri(self.input_container_sas)
+
+        for i in self.image_ids_to_score:
+            if self.metadata_available:
+                image_id = i[0]
+                image_meta = i[1]
+            else:
+                image_id = i
+                image_meta = None
+
             try:
                 if self.use_url:
                     # local_filename will be a tempfile with a generated name
@@ -122,8 +138,14 @@ class BatchScorer:
             json.dump(self.detections, f, indent=1)
 
         failed_path = os.path.join(self.output_dir, 'failures_{}.json'.format(self.job_id))
+
+        if self.metadata_available:
+            failed_items = [[image_id, meta] for (image_id, meta) in zip(self.failed_images, self.failed_metas)]
+        else:
+            failed_items = self.failed_images
+
         with open(failed_path, 'w') as f:
-            json.dump(self.failed_images, f, indent=1)
+            json.dump(failed_items, f, indent=1)
 
 
 if __name__ == '__main__':
@@ -162,8 +184,8 @@ if __name__ == '__main__':
     os.makedirs(args.output_dir, exist_ok=True)
     print('score.py, output_dir', args.output_dir)
 
-    # get model from model registry; always use version 1 - we don't use AML to manage model versions.
-    model_path = Model.get_model_path(args.model_name, version=1)
+    # get model from model registry
+    model_path = Model.get_model_path(args.model_name)
 
     print('score.py, model_path', model_path)
 
@@ -195,7 +217,13 @@ if __name__ == '__main__':
         raise ValueError('Indices {} and {} are not allowed for the image list of length {}'.format(
             args.begin_index, args.end_index, len(list_images)
         ))
+
+    # items in this array can be strings or [image_id, metadata]
     image_ids_to_score = list_images[begin_index:end_index]
+    if len(image_ids_to_score) == 0:
+        print('Zero images in the shard, exiting')
+        sys.exit(0)
+
     print('score.py, processing from index {} to {}. Length of images_shard is {}.'.format(
         begin_index, end_index, len(image_ids_to_score)))
 
@@ -203,6 +231,7 @@ if __name__ == '__main__':
                          input_container_sas=args.input_container_sas,
                          job_id=args.job_id,
                          image_ids_to_score=image_ids_to_score,
+                         use_url=args.use_url,
                          output_dir=args.output_dir,
                          detection_threshold=args.detection_threshold,
                          batch_size=args.batch_size)

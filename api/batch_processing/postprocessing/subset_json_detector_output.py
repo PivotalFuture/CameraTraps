@@ -5,33 +5,7 @@
 # a specified query (prefix), optionally replacing that prefix with a replacement token.  
 # If the query is blank, can also be used to prepend content to all filenames.
 #
-# 1) Retrieve all elements where filenames contain a specified query string, 
-#    optionally replacing that query with a replacement token. If the query is blank, 
-#    can also be used to prepend content to all filenames.
-#
-# 2) Create separate .jsons for each unique path, optionally making the filenames 
-#    in those .json's relative paths.  In this case, you specify an output directory, 
-#    rather than an output path.  All images in the folder blah\foo\bar will end up 
-#    in a .json file called blah_foo_bar.json.
-#
-###
-#
-# Sample invocations (splitting into multiple json's):
-#
-# Read from "1800_idfg_statewide_wolf_detections_w_classifications.json", split up into 
-# individual .jsons in 'd:\temp\idfg\output', making filenames relative to their individual
-# folders:
-#
-# python subset_json_detector_output.py "d:\temp\idfg\1800_idfg_statewide_wolf_detections_w_classifications.json" "d:\temp\idfg\output" --split_folders --make_folder_relative
-#
-# Now do the same thing, but instead of writing .json's to d:\temp\idfg\output, write them to *subfolders*
-# corresponding to the subfolders for each .json file.
-#
-# python subset_json_detector_output.py "d:\temp\idfg\1800_detections_S2.json" "d:\temp\idfg\output_to_folders" --split_folders --make_folder_relative --copy_jsons_to_folders
-#
-###
-#
-# Sample invocations (creating a single subset matching a query):
+# Sample invocation:
 #
 # Read from "1800_detections.json", write to "1800_detections_2017.json"
 #
@@ -46,13 +20,8 @@
 
 #%% Constants and imports
 
-import copy
 import json
-import os
-
 from tqdm import tqdm
-
-from data_management.annotations import annotation_constants
 
 
 #%% Helper classes

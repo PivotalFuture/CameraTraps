@@ -73,8 +73,8 @@ Meanwhile, once the shards of images are submitted for processing, please do not
 
 | Parameter                | Is required | Type | Explanation                 |
 |--------------------------|-------------|-------|----------------------------|
-| input_container_sas      | Yes         | string | SAS URL with list and read permissions to the Blob Storage container where the images are stored. |
-| images_requested_json_sas | No          | string | SAS URL with list and read permissions to a json file in Blob Storage. The json contains a list, where each item (a string) in the list is the full path to an image from the root of the container. An example of the content of this file: `["Season1/Location1/Camera1/image1.jpg", "Season1/Location1/Camera1/image2.jpg"]`.  Only images whose paths are listed here will be processed. |
+| input_container_sas      | Yes<sup>1</sup>         | string | SAS URL with list and read permissions to the Blob Storage container where the images are stored. |
+| images_requested_json_sas | No<sup>1</sup>        | string | SAS URL with list and read permissions to a json file in Blob Storage. See below for explanation of the content of the json to provide. |
 | image_path_prefix        | No          | string | Only process images whose full path starts with `image_path_prefix` (case-_sensitive_). Note that any image paths specified in `images_requested_json_sas` will need to be the full path from the root of the container, regardless whether `image_path_prefix` is provided. |
 | first_n                  | No          | int | Only process the first `first_n` images. Order of images is not guaranteed, but is likely to be alphabetical. Set this to a small number to avoid taking time to fully list all images in the blob (about 15 minutes for 1 million images) if you just want to try this API. |
 | sample_n                | No          | int | Randomly select `sample_n` images to process. |
@@ -125,8 +125,11 @@ Example body of the POST request:
 {
   "input_container_sas": "https://storageaccountname.blob.core.windows.net/container-name?se=2019-04-23T01%3A30%3A00Z&sp=rl&sv=2018-03-28&sr=c&sig=A_LONG_STRING",
   "images_requested_json_sas": "https://storageaccountname2.blob.core.windows.net/container-name2/possibly_in_a_folder/my_list_of_images.json?se=2019-04-19T20%3A31%3A00Z&sp=rl&sv=2018-03-28&sr=b&sig=ANOTHER_LONG_STRING",
-  "image_path_prefix": "Alberta_location1_2019",
-  "first_n": 100000
+  "image_path_prefix": "2019/Alberta_location1",
+  "first_n": 100000,
+  "request_name": "Alberta_l1",
+  "model_version": "3",
+  "caller": "whitelisted_user_x"
 }
 ```
 
@@ -158,31 +161,39 @@ When all shards have finished processing, the `status` returned by the `/task` e
 
 ```json
 {
-    "uuid": 3821,
+    "uuid": 6319,
     "status": {
         "request_status": "completed",
-        "time": "2019-05-22 00:31:51",
-        "message": "Completed at 2019-05-22 00:31:51. Number of failed shards: 0. URLs to output files: {'detections': 'https://cameratrap.blob.core.windows.net/async-api-v3-2/3821/3821_detections__20190522002119.json?se=2019-06-05T00%3A31%3A51Z&sp=r&sv=2018-03-28&sr=b&sig=hYWcHrnMbZ8EjQ1t4Rmtx0Ay/DZDa%2BsQehBP4/nySko%3D', 'failed_images': 'https://cameratrap.blob.core.windows.net/async-api-v3-2/3821/3821_failed_images__20190522002119.json?se=2019-06-05T00%3A31%3A51Z&sp=r&sv=2018-03-28&sr=b&sig=xwoi9tFD9pKhAKdoEwx%2BsnS5gRpEE5x3hR1IY4Jll2Y%3D', 'images': 'https://cameratrap.blob.core.windows.net/async-api-v3-2/3821/3821_images.json?se=2019-06-05T00%3A31%3A51Z&sp=r&sv=2018-03-28&sr=b&sig=llDBCWK%2B%2BQHae5rK7U8RchjPN/DZYb96XHB0r/yX8LU%3D'}"
+        "time": "2019-06-06 18:56:32",
+        "message": {
+            "num_failed_shards": 0,
+            "output_file_urls": {
+                "detections": "https://cameratrap.blob.core.windows.net/async-api/6319/6319_detections_test_20190606185113.json?se=2019-09-04T18%3A56%3A32Z&sp=r&sv=2018-03-28&sr=b&sig=KEY",
+                "failed_images": "https://cameratrap.blob.core.windows.net/async-api/6319/6319_failed_images_url_test_20190606185113.json?se=2019-09-04T18%3A56%3A32Z&sp=r&sv=2018-03-28&sr=b&sig=KEY",
+                "images": "https://cameratrap.blob.core.windows.net/async-api/6319/6319_images.json?se=2019-09-04T18%3A56%3A32Z&sp=r&sv=2018-03-28&sr=b&sig=KEY"
+            }
+        }
     },
-    "timestamp": "2019-05-22 00:21:19",
+    "timestamp": "2019-06-06 18:51:13",
     "endpoint": "uri"
 }
 ```
  which you can parse to obtain the URLs:
 ```python
-import json
-
 task_status = body['status']
 assert task_status['request_status'] == 'completed'
-output_files_str = task_status['message'].split('URLs to output files: ')[1]
-output_files = json.loads(output_files_str)
+message = task_status['message']
+assert message['num_failed_shards'] == 0
+
+output_files = message['output_file_urls']
 url_to_result = output_files['detections']
 url_to_failed_images = output_files['failed_images']
 url_to_all_images_processed = output_files['images']
 
 ```
 
-These URLs are valid for 14 days from the time the request has finished. If you neglected to retrieve them before the links expired, contact us with the RequestID and we can send the results to you. Here are the 3 files to expect:
+These URLs are valid for 90 days from the time the request has finished. If you neglected to retrieve them before the links expired, contact us with the RequestID and we can send the results to you. Here are the 3 files to expect:
+
 
 | File name                | Description | 
 |--------------------------|-------------|
@@ -201,17 +212,69 @@ The output of the detector is saved in `RequestID_detections.csv`. It looks like
 | folder/subfolders/image3.jpg | 0.0 | [] |
 | folder/subfolders/image4.jpg | 0.4091 | "[[0.2823, 0.1759, 0.3608, 0.2458, 0.4091]]" |
 
-The first column contains the full path to the image in the blob container. 
+```json
+{
+    "info": {
+        "detector": "megadetector_v3",
+        "detection_completion_time": "2019-05-22 02:12:19",
+        "classifier": "ecosystem1_v2",
+        "classification_completion_time": "2019-05-26 01:52:08",
+        "format_version": "1.0"
+    },
+    "detection_categories": {
+        "1": "animal",
+        "2": "person",
+        "4": "vehicle"
+    },
+    "classification_categories": {
+        "0": "fox",
+        "1": "elk",
+        "2": "wolf",
+        "3": "bear",
+        "4": "moose"
+    },
+    "images": [
+        {
+            "file": "/path/from/base/dir/image1.jpg",
+            "meta": "a string of metadata if it was available in the list at images_requested_json_sas",
+            "max_detection_conf": 0.926,
+            "detections": [
+                {
+                    "category": "1",
+                    "conf": 0.926,
+                    "bbox": [0.0, 0.2762, 0.1539, 0.2825], 
+                    "classifications": [
+                        ["3", 0.901],
+                        ["1", 0.071],
+                        ["4", 0.025]
+                    ]
+                },
+                {
+                    "category": "1",
+                    "conf": 0.061,
+                    "bbox": [0.0451, 0.1849, 0.3642, 0.4636]
+                }
+            ]
+        },
+        {
+            "file": "/path/from/base/dir/image2.jpg",
+            "meta": "",
+            "max_detection_conf": 0,
+            "detections": []
+        }
+    ]
+}
+```
 
 The second column is the confidence value of the most confident detection on the image (all detections above confidence 0.05 are included so you can select a confidence threshold for determining empty from non-empty).
 
 The third column contains details of the detections so you can visualize them. It is a stringfied json of a list of lists, representing the detections made on that image. Each detection list has the coordinates of the bounding box surrounding the detection, followed by its confidence:
 
 ```
-[ymin, xmin, ymax, xmax, confidence, (class)]
+[x_min, y_min, width_of_box, height_of_box]
 ```
 
-where `(xmin, ymin)` is the upper-left corner of the detection bounding box. The coordinates are relative to the height and width of the image. 
+where `(x_min, y_min)` is the upper-left corner of the detection bounding box, with the origin in the upper-left corner of the image. The coordinates and box width and height are *relative* to the width and height of the image. Note that this is different from the coordinate format used in the [COCO Camera Traps](data_management/README.md) databases, which are in absolute coordinates. 
 
 An integer `class` comes after `confidence` in versions of the API that uses MegaDetector version 3 or later. The `class` label corresponds to the following:
 
@@ -225,18 +288,16 @@ Note that the `vehicle` class (available in Mega Detector version 4 or later) is
 
 When the detector model detects no animal (or person or vehicle), the confidence is shown as 0.0 (not confident that there is an object of interest) and the detection column is an empty list.
 
-
-Note that the `vehicle` detection class (available in Mega Detector version 4 or later) is &ldquo;4&rdquo;. Class number &ldquo;3&rdquo; (group) is not included in training and should be ignored (and so should any other class labels not listed here) if it shows up in the result.
+Note that the `vehicle` detection class (available in MegaDetector version 4 or later) is &ldquo;4&rdquo;. Detection categories not listed here (including "0" and "3") are used for intermediate processing and are allowable by this format specification, but should be treated as "no detection".
 
 When the detector model detects no animal (or person or vehicle), the confidence `conf` is shown as 0.0 (not confident that there is an object of interest) and the `detections` field is an empty list.
-
 
 All detections above confidence threshold 0.05 or 0.1 (depending on the version of the API) are recorded in the output file.
 
 
 ##### Classifier outputs
 
-After a classifier is applied, each tuple in a `classifications` list represents `[species, confidence]`. They are listed in order of confidence. The species categories should be interpreted using the `classification_categories` dictionary.
+After a classifier is applied, each tuple in a `classifications` list represents `[species, confidence]`. They are listed in order of confidence. The species categories should be interpreted using the `classification_categories` dictionary.  Keys in `classification_categories` will always be nonnegative integers formatted as strings.
 
 
 ## Post-processing tools
