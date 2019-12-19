@@ -4,6 +4,8 @@ dependencies:
 - python>=3.5
 - nb_conda_kernels
 - ipykernel
+- azure-storage-blob>=1.5.0
+- azure-cosmos>=3.1.0
 - humanfriendly
 - joblib
 - jsonpickle
@@ -14,23 +16,6 @@ dependencies:
 - scikit-image>=0.13.1
 - scikit-learn>=0.19.1
 - jsonschema
-- requests
-- unidecode   # needed sometimes for curating MegaDB entries
-- tensorboard # required for the tensorboard extra on azureml-sdk to work
-- pip         # good to add pip as an explicit dependency
-
-# Some Azure packages or versions are only available from PyPI
-# These may require GCC to be installed
-#
-# See https://azure.github.io/azure-sdk/releases/latest/
-- pip:        
-  # doc: https://azure-storage.readthedocs.io - this will go to versions prior to v12 update
-  - azure-storage-blob>=1.5.0, <=2.1.0   
-  # doc: https://azuresdkdocs.blob.core.windows.net/$web/python/azure-cosmos/4.0.0b5/index.html
-  - azure-cosmos==4.0.0b6  
-  - azureml-sdk[tensorboard]==1.0.83
-  - requests-toolbelt  # required to call the sync API
-  - locust  # load testing of sync API
 
 # the `nb_conda_kernels` and `ipykernel` packages are installed so that we
 # can use Jupyter Notebooks with this environment as a kernel
