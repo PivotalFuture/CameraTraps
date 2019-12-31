@@ -17,7 +17,7 @@ All images are stored (unzipped) in blob storage, so we can download individual 
 
 ## Format
 
-The following illustrates what items in the `sequences`, `datasets` and `splits` tables look like. The formal schema, required fields, and constraints on allowed values are specified in `schema/sequences_schema.json` and `schema/datasets_schema.json` and the associated `schema_check.py` scripts.
+The following illustrates what items in the `sequences` and `datasets` tables look like. The formal schema, required fields, and constraints on allowed values are specified in `schema/sequences_schema.json` and `schema/datasets_schema.json` and the associated `schema_check.py` scripts.
 
 `sequences` table
 
