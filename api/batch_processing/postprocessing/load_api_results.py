@@ -8,9 +8,10 @@
 
 #%% Constants and imports
 
-import pandas as pd
 import json
 import os
+
+import pandas as pd
 
 headers = ['image_path', 'max_confidence', 'detections']
     
