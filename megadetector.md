@@ -1,6 +1,24 @@
+## Table of contents
+
+1. [MegaDetector overview](#megadetector-overview)
+2. [Our ask to MegaDetector users](#our-ask-to-megadetector-users)
+3. [Who is using MegaDetector?](#who-is-using-megadetector)
+4. [Downloading the model(s)](#downloading-the-models)
+5. [Using the models](#using-the-models)
+6. [Tell me more about why detectors are a good first step for camera trap images](#tell-me-more-about-why-detectors-are-a-good-first-step-for-camera-trap-images)
+7. [Pretty picture](#pretty-picture)
+8. [Mesmerizing video](#mesmerizing-video)
+9. [Can you share the training data?](#can-you-share-the-training-data)
+
+
 ## MegaDetector overview
 
 This page hosts a model we've trained to detect (but not identify) animals in camera trap images, using several hundred thousand bounding boxes from a variety of ecosystems.  The current model is based on Faster-RCNN with an InceptionResNetv2 base network, and was trained with the TensorFlow Object Detection API.  We use this model as our first stage for classifier training and inference.
+
+## Who is using MegaDetector?
+
+See <a href="https://github.com/microsoft/CameraTraps/#who-is-using-the-ai-for-earth-camera-trap-tools">this list</a> on the repo's main page.
+
 
 ## Downloading the model(s)
 
