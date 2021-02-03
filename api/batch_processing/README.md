@@ -21,13 +21,13 @@ It takes about 0.8 seconds per image per machine, and we have at most 16 machine
 The endpoints of this API are available at
 
 ```
-http://URL/v1/camera-trap/detection-batch
+http://URL/v4/camera-trap/detection-batch
 ```
 
 #### `/request_detections`
 To submit a request for batch processing, make a POST call to
 
-```http://URL/v1/camera-trap/detection-batch/request_detections```.
+```http://URL/v4/camera-trap/detection-batch/request_detections```.
 
 with a json body containing input fields defined below. The API will return with a json response very quickly to give you a RequestID representing the request you have submitted (or an error message, if your inputs are not acceptable), for example:
 ```json
@@ -39,34 +39,37 @@ with a json body containing input fields defined below. The API will return with
 #### `/task`
 Check the status of your request by calling the `/task` endpoint via a GET call, passing in your RequestID:
 
-```http://URL/v1/camera-trap/detection-batch/task/RequestID```
+```http://URL/v4/camera-trap/detection-batch/task/RequestID```
 
 This returns a json with the fields `status`, `uuid`, and a few others. The `status` field contains a stringfield json object with the following fields: 
 
-- `request_status`: one of `running`, `failed`, `problem`, and `completed`. The status `failed` indicates that the images have not been submitted to the cluster for processing, and so you can go ahead and call the endpoint again, correcting your inputs according to the message shown. The status `problem` indicates that the images have already been submitted for processing but the API encountered an error while monitoring progress; in this case, *please do not retry*, contact us to retrieve your results so that abandoned jobs are not using up resources. 
+- `request_status`: one of `running`, `failed`, `problem`, `completed`, and `canceled`. 
 
-    - The status `failed` indicates that the images have not been submitted to the cluster for processing, and so you can go ahead and call the endpoint again, correcting your inputs according to the message shown. 
-    - The status `problem` indicates that the images have already been submitted for processing but the API encountered an error while monitoring progress; in this case, *please do not retry*; contact us to retrieve your results so that no unnecessary processing would occupy the cluster (`message` field will mention &ldquo;please contact us&rdquo;).
+    - The status `failed` indicates that the images have not been submitted to the cluster for processing, and so you can go ahead and call the endpoint again, correcting your inputs according to the error message returned with the status. 
+    - The status `problem` indicates that the images have already been submitted for processing but the API encountered an error while monitoring progress; in this case, *please do not retry*; contact us to retrieve your results so that no unnecessary processing would occupy the cluster (`message` field will mention "please contact us").
+    - `canceled` if your call to the `/cancel_request` endpoint took effect.
 
-- `time`: timestamp in UTC time.
+- `message`: a longer string describing the `request_status` and any errors; when the request is completed, the URLs to the output files will also be here (see [Outputs](#23-outputs) section below).
 
 
 #### `/supported_model_versions`
 Check which versions of the MegaDetector are supported by this API by making a GET call to 
 
-```http://URL/v1/camera-trap/detection-batch/supported_model_versions```
+```http://URL/v4/camera-trap/detection-batch/supported_model_versions```
 
 
 #### `/default_model_version`
 Check which versions of the MegaDetector is used by default by making a GET call to
 
-```http://URL/v1/camera-trap/detection-batch/default_model_version```
+```http://URL/v4/camera-trap/detection-batch/default_model_version```
 
 
-#### Canceling a request
-Not yet supported. 
+#### `/cancel_request`
+If you have submitted a request by mistake or realized the wrong inputs were used, you can make a POST call to
 
-Meanwhile, once the shards of images are submitted for processing, please do not retry if a subsequent call to the `/task` endpoint indicates that there has been a problem. Instead, contact us to retrieve any results. In this case, the `/task` endpoint will return a message object where the `message` field mentions "please contact us", and the `request_status` field is "problem").
+```http://URL/v4/camera-trap/detection-batch/cancel_request```
+
+The body should contain the `caller` (see next section on _API inputs_) and `task_id` fields. You should get back a response immediately with status code 200 if the signal was successfully sent. You can verify that the request has been canceled at the `/task` endpoint. 
 
 
 ### API inputs
@@ -79,9 +82,12 @@ Meanwhile, once the shards of images are submitted for processing, please do not
 | first_n                  | No          | int | Only process the first `first_n` images. Order of images is not guaranteed, but is likely to be alphabetical. Set this to a small number to avoid taking time to fully list all images in the blob (about 15 minutes for 1 million images) if you just want to try this API. |
 | sample_n                | No          | int | Randomly select `sample_n` images to process. |
 | model_version           | No          | string | Version of the MegaDetector model to use. Default is the most updated stable version (check using the `/default_model_version` endpoint). Supported versions are available at the `/supported_model_versions` endpoint.|
-| request_name            | No          | string | A string (letters, digits, `_`, `-` allowed, max length 32 characters) that will be appended to the output file names to help you identify the resulting files. A timestamp in UTC (`%Y%m%d%H%M%S`) of the time of submission will be appended to the resulting files automatically. |
-| use_url                  | No         | bool | True if the image URLs are used. |
+| request_name            | No          | string | A string (letters, digits, `_`, `-` allowed, max length 92 characters) that will be appended to the output file names to help you identify the resulting files. A timestamp in UTC (`%Y%m%d%H%M%S`) of the time of submission will be appended to the resulting files automatically. |
+| use_url                  | No         | bool | Set to `true` if you are providing public image URLs. |
 | caller                  | Yes         | string | An identifier that we use to whitelist users for now. |
+| country                  | No (but recommended) | string | Country where the majority of the images in this batch are taken. Use an [ISO 3166-1 alpha-3 code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-3#Officially_assigned_code_elements), such as "BWA" for Botswana and "USA" for the United States |
+| organization_name | No (but recommended) | string | Organization conducting the survey. |
+
 
 <sup>1</sup> There are two ways of giving the API access to your images. 
 
@@ -110,7 +116,7 @@ We can store a (short) string of metadata with each image path or URL. The json 
 
 #### Other notes and example  
 
-- Only images with file name ending in &lsquo;.jpg&rsquo; or &lsquo;.jpeg&rsquo; (case insensitive) will be processed, so please make sure the file names are compliant before you upload them to the container (you cannot rename a blob without copying it entirely once it is in Blob Storage). 
+- Only images with file name ending in ".jpg" or ".png" (case insensitive) will be processed, so please make sure the file names are compliant before you upload them to the container (you cannot rename a blob without copying it entirely once it is in Blob Storage). 
 
 - By default we process all such images in the specified container. You can choose to only process a subset of them by specifying the other input parameters, and the images will be filtered out accordingly in this order:
     - `images_requested_json_sas`
