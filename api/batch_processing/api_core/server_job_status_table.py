@@ -19,8 +19,22 @@ from server_utils import get_utc_time
 
 
 class JobStatusTable:
-
-    allowed_statuses = ['running', 'failed', 'problem', 'completed', 'canceled']
+    """
+    A wrapper around the Cosmos DB client. Each item in the table "batch_api_jobs" represents
+    a request/Batch Job, and should have the following fields:
+        - id: this is the job_id
+        - api_instance
+        - status
+        - last_updated
+        - call_params: the dict representing the body of the POST request from the user
+    The 'status' field is a dict with the following fields:
+        - request_status
+        - message
+        - num_tasks  (present after Batch Job created)
+        - num_images  (present after Batch Job created)
+    """
+    # a job moves from created to running/problem after the Batch Job has been submitted
+    allowed_statuses = ['created', 'running', 'failed', 'problem', 'completed', 'canceled']
 
     def __init__(self, api_instance=None):
         self.api_instance = api_instance if api_instance is not None else API_INSTANCE_NAME
@@ -29,7 +43,8 @@ class JobStatusTable:
         self.db_jobs_client = db_client.get_container_client('batch_api_jobs')
 
     def create_job_status(self, job_id: str, status: Union[dict, str], call_params: dict) -> dict:
-        """Usually called with the status set to `created` when the request is first received"""
+        assert 'request_status' in status and 'message' in status
+        assert status['request_status'] in JobStatusTable.allowed_statuses
 
         # job_id should be unique across all instances, and is also the partition key
         item = {
@@ -43,18 +58,29 @@ class JobStatusTable:
         return created_item
 
     def update_job_status(self, job_id: str, status: Union[dict, str]) -> dict:
-        """ On updating, the status is usually a dict with fields `request_status`
-        and `message`
-        """
-        if isinstance(status, dict) and 'request_status' in status:
-            assert status['request_status'] in JobStatusTable.allowed_statuses
-            assert 'message' in status
+        assert 'request_status' in status and 'message' in status
+        assert status['request_status'] in JobStatusTable.allowed_statuses
 
+        # TODO do not read the entry first to get the call_params when the Cosmos SDK add a
+        # patching functionality:
+        # https://feedback.azure.com/forums/263030-azure-cosmos-db/suggestions/6693091-be-able-to-do-partial-updates-on-document
+        item_old = self.read_job_status(job_id)
+        if item_old is None:
+            raise ValueError
+
+        # need to retain other fields in 'status' to be able to restart monitoring thread
+        if 'status' in item_old and isinstance(item_old['status'], dict):
+            # retain existing fields; update as needed
+            for k, v in item_old['status'].items():
+                if k not in status:
+                    status[k] = v
         item = {
             'id': job_id,
             'api_instance': self.api_instance,
             'status': status,
-            'last_updated': str(datetime.now()),
+            'job_submission_time': item_old['job_submission_time'],
+            'last_updated': get_utc_time(),
+            'call_params': item_old['call_params']
         }
         replaced_item = self.db_jobs_client.replace_item(job_id, item)
         return replaced_item

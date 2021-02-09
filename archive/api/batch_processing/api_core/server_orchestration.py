@@ -293,11 +293,10 @@ def monitor_batch_job(job_id: str,
         return
 
 
-def aggregate_results(job_id: str,
-                      model_version: str,
-                      job_name: str,
-                      job_submission_timestamp: str) -> str:
+def aggregate_results(job_id, model_version, job_name, job_submission_timestamp):
     log.info(f'server_job, aggregate_results starting, job_id: {job_id}')
+
+    task_outputs_dir = f'api_{api_config.API_INSTANCE_NAME}/job_{job_id}/task_outputs/'
 
     container_url = sas_blob_utils.build_azure_storage_uri(account=api_config.STORAGE_ACCOUNT_NAME,
                                                            container=api_config.STORAGE_CONTAINER_API)
