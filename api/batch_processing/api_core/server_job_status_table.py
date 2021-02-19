@@ -8,7 +8,6 @@ the Cosmos DB table "batch_api_jobs".
 
 import unittest
 import uuid
-from datetime import datetime
 from typing import Union, Optional
 
 from azure.cosmos.cosmos_client import CosmosClient
@@ -86,7 +85,12 @@ class JobStatusTable:
         return replaced_item
 
     def read_job_status(self, job_id) -> Optional[dict]:
-        # job_id is also the partition key
+        """
+        Read the status of the job from the Cosmos DB table of job status.
+        Note that it does not check the actual status of the job on Batch, and just returns what
+        the monitoring thread wrote to the database.
+        job_id is also the partition key
+        """
         try:
             read_item = self.db_jobs_client.read_item(job_id, partition_key=job_id)
         except CosmosResourceNotFoundError:

@@ -3,7 +3,8 @@
 
 import string
 import uuid
-from threading import Thread
+import threading
+from datetime import timedelta
 
 import sas_blob_utils  # from ai4eutils
 from flask import Flask, request, jsonify
@@ -32,7 +33,7 @@ API_PREFIX = api_config.API_PREFIX
 
 @app.route(f'{API_PREFIX}/')
 def hello():
-    return 'Camera traps batch processing API'
+    return f'Camera traps batch processing API. Instance: {api_config.API_INSTANCE_NAME}'
 
 
 @app.route(f'{API_PREFIX}/request_detections', methods=['POST'])
@@ -188,11 +189,48 @@ def retrieve_job_status(job_id: str):
     Does not require the "caller" field to avoid checking the allowlist in App Configurations.
     Retains the /task endpoint name to be compatible with previous versions.
     """
-    item_read = job_status_table.read_job_status(job_id)
+    item_read = job_status_table.read_job_status(job_id)  # just what the monitoring thread wrote to the DB
     if item_read is None:
         return make_error(404, 'Task is not found.')
     if 'status' not in item_read or 'last_updated' not in item_read:
         return make_error(404, 'Something went wrong. This task does not have a valid status.')
+
+    # If the status is running, it could be a Job submitted before the last restart of this
+    # API instance. If that is the case, we should start to monitor its progress again.
+    status = item_read['status']
+
+    last_updated = datetime.fromisoformat(item_read['last_updated'][:-1])  # get rid of "Z" (required by Cosmos DB)
+    time_passed = datetime.utcnow() - last_updated
+    job_is_unmonitored = True if time_passed > timedelta(minutes=(api_config.MONITOR_PERIOD_MINUTES + 1)) else False
+
+    if isinstance(status, dict) and \
+            'request_status' in status and \
+            status['request_status'] in ['running', 'problem'] and \
+            'num_tasks' in status and \
+            job_id not in get_thread_names() and \
+            job_is_unmonitored:
+        # WARNING model_version could be wrong (a newer version number gets written to the output file) around
+        # the time that  the model is updated, if this request was submitted before the model update
+        # and the API restart; this should be quite rare
+        model_version = item_read['call_params'].get('model_version', api_config.DEFAULT_MD_VERSION)
+
+        num_tasks = status['num_tasks']
+        job_name = item_read['call_params'].get('request_name', '')
+        job_submission_timestamp = item_read.get('job_submission_time', '')
+
+        thread = threading.Thread(
+            target=monitor_batch_job,
+            name=f'job_{job_id}',
+            kwargs={
+                'job_id': job_id,
+                'num_tasks': num_tasks,
+                'model_version': model_version,
+                'job_name': job_name,
+                'job_submission_timestamp': job_submission_timestamp
+            }
+        )
+        thread.start()
+        app.logger.info(f'server, started a new thread to monitor job {job_id}')
 
     # conform to previous schemes
     item_to_return = {
