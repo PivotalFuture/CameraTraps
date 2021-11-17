@@ -1,6 +1,6 @@
 # Detector batch processing API user guide
 
-We offer a service for processing a large quantity of camera trap images using our [MegaDetector](https://github.com/Microsoft/CameraTraps#megadetector) by calling an API, documented here. The output is most helpful for separating empty from non-empty images based on some detector confidence threshold that you select, and putting bounding boxes around animals so that manual review can proceed faster.
+Though most of our users either use the [MegaDetector](https://github.com/Microsoft/CameraTraps#megadetector) model directly or work with us to run MegaDetector on the cloud, we also offer an open-source reference implementation for a an API that processes a large quantity of camera trap images, to support  a variety of online scenarios. The output is most helpful for separating empty from non-empty images based on a detector confidence threshold that you select, and putting bounding boxes around animals, people, and vehicles to help manual review proceed more quickly.  If you are interested in setting up an endpoint to process very small numbers of images for real-time applications (e.g. for anti-poaching applications), see the source for our [real-time camera trap image processing API](https://aiforearth.portal.azure-api.net/docs/services/ai-for-earth-camera-trap-detection-api/).
 
 You can process a batch of up to two million images in one request to the API. If in addition you have some images that are labeled, we can evaluate the performance of the MegaDetector on your labeled images (see [Post-processing tools](#post-processing-tools)).
 
@@ -9,23 +9,31 @@ If you would like to try automating species identification as well, we can train
 All references to &ldquo;container&rdquo; in this document refer to [Azure Blob Storage](https://azure.microsoft.com/en-us/services/storage/blobs/) containers. 
 
 
-## Processing time
-
-It takes about 0.8 seconds per image per machine, and we have at most 16 machines that can process them in parallel. So if no one else is using the service and you&rsquo;d like to process 1 million images, it will take 1,000,000 * 0.8 / (16 * 60 * 60) = 14 hours. 
-
-
 ## API
 
 ### API endpoints
 
-The endpoints of this API are available at
+Once configured to run on a live instance, the endpoints of this API are available at
 
 ```
 http://URL/v4/camera-trap/detection-batch
 ```
 
 #### `/request_detections`
-To submit a request for batch processing, make a POST call to
+
+To submit a request for batch processing, make a POST call to this endpoint with a json body containing input fields defined below. The API will return with a json response very quickly to give you a RequestID (UUID4 hex) representing the request you have submitted, for example:
+```json
+{
+  "request_id": "f940ecd58c7746b1bde89bd6ba5a5202"
+}
+```
+or an error message, if your inputs are not acceptable:
+```json
+{
+  "error": "error message."
+}
+```
+In particular the endpoint will return a 503 error if the queue of requests is full. Please re-try later in that case.
 
 ```http://URL/v4/camera-trap/detection-batch/request_detections```.
 
@@ -37,6 +45,7 @@ with a json body containing input fields defined below. The API will return with
 ```
 
 #### `/task`
+
 Check the status of your request by calling the `/task` endpoint via a GET call, passing in your RequestID:
 
 ```http://URL/v4/camera-trap/detection-batch/task/RequestID```

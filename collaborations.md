@@ -16,7 +16,7 @@ Basically this page is the response we give when someone emails us and says &ldq
 
 All of our work in this space is open-sourced here:
 
-&nbsp;&nbsp;&nbsp;&nbsp;<https://github.com/Microsoft/cameratraps>
+Basically this page is the response we give when someone emails us and says "I have too many camera trap images!  Can you help me?!?!".  If you're an ecologist reading this page, and that sounds familiar, feel free to answer the questions below in an email to <a href="mailto:cameratraps@lila.science">cameratraps@lila.science</a>.
 
 The core of our work is a model &ndash; we call it the &ldquo;MegaDetector&rdquo; &ndash; that we use to separate images that are empty/animals/people/vehicles:
 
