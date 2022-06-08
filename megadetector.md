@@ -3,12 +3,17 @@
 1. [MegaDetector overview](#megadetector-overview)
 2. [Our ask to MegaDetector users](#our-ask-to-megadetector-users)
 3. [Who is using MegaDetector?](#who-is-using-megadetector)
-4. [Downloading the model(s)](#downloading-the-models)
-5. [Using the models](#using-the-models)
-6. [Tell me more about why detectors are a good first step for camera trap images](#tell-me-more-about-why-detectors-are-a-good-first-step-for-camera-trap-images)
-7. [Pretty picture](#pretty-picture)
-8. [Mesmerizing video](#mesmerizing-video)
-9. [Can you share the training data?](#can-you-share-the-training-data)
+4. [How fast is MegaDetector, and can I run it on my giant/small computer?](#how-fast-is-megadetector-and-can-i-run-it-on-my-giantsmall-computer)
+5. [Downloading the model](#downloading-the-model)
+6. [Using the model](#using-the-model)
+7. [Is there a GUI?](#is-there-a-gui)
+8.  [How do I use the results?](#how-do-i-use-the-results)
+9. [Have you evaluated MegaDetector's accuracy?](#have-you-evaluated-megadetectors-accuracy)
+10. [Citing MegaDetector](#citing-megadetector)
+11. [Tell me more about why detectors are a good first step for camera trap images](#tell-me-more-about-why-detectors-are-a-good-first-step-for-camera-trap-images)
+12. [Pretty picture](#pretty-picture)
+13. [Mesmerizing video](#mesmerizing-video)
+14. [Can you share the training data?](#can-you-share-the-training-data)
 
 
 ## MegaDetector overview
@@ -31,36 +36,54 @@ MegaDetector is free, and it makes us super-happy when people use it, so we put 
 
 ## How fast is MegaDetector, and can I run it on my giant/small computer?
 
-We often run MegaDetector on behalf of users as a free service; see our [MegaDetector collaborations page](collaborations.md) for more information.  But there are many reasons to run MegaDetctor on your own, and how practical this is will depend in part on how many imags you need to process and what kind of computer hardware you have available.  MegaDetector is designed to favor accuracy over speed, and we typically run it on <a href="https://en.wikipedia.org/wiki/Graphics_processing_unit">GPU</a>-enabled computers.  That said, you can run anything on anything if you have enough time, and we're happy to support users who run MegaDetector on their own GPUs (in the cloud or on their own PCs), on their own CPUs, or even on embedded devices.  If you only need to process a few thousand images per week, for example, a typical laptop will be just fine.  If you want to crunch through 20 million images as fast as possible, you'll want at least one GPU.
+We often run MegaDetector on behalf of users as a free service; see our [MegaDetector collaborations page](collaborations.md) for more information.  But there are many reasons to run MegaDetector on your own, and how practical this is will depend in part on how many imags you need to process and what kind of computer hardware you have available.  MegaDetector is designed to favor accuracy over speed, and we typically run it on <a href="https://en.wikipedia.org/wiki/Graphics_processing_unit">GPU</a>-enabled computers.  That said, you can run anything on anything if you have enough time, and we're happy to support users who run MegaDetector on their own GPUs (in the cloud or on their own PCs), on their own CPUs, or even on embedded devices.  If you only need to process a few thousand images per week, for example, a typical laptop will be just fine.  If you want to crunch through 20 million images as fast as possible, you'll want at least one GPU.
 
-Here are some good rules of thumb to help you estimate how fast you can run MegaDetector on different types of hardware:
+Here are some good rules of thumb to help you estimate how fast you can run MegaDetector on different types of hardware...
 
-* On a decent laptop (without a fancy deep learning GPU) that is neither the fastest nor slowest laptop you can buy in 2021, MegaDetector takes somewhere between eight and twenty seconds per image, depending on how many CPUs you use.  This works out to being able to process somewhere between 4,000 and 10,000 image per day.  This might be totally fine for scenarios where you have even hundreds of thousands of images, as long as you can wait a few days.
-* On a dedicated deep learning GPU that is neither the fastest nor slowest GPU you can buy in 2021, MegaDetector takes between 0.3 and 0.5 seconds per image, which works out to between 200,000 and 250,000 images per day.  We also include a few <a href="#benchmark-timings">benchmark timings</a> below on some specific GPUs.
+ 
 
-We don't typically recommend running MegaDetctor on embedded devices, although <a href="https://www.electromaker.io/project/view/whats-destroying-my-yard-pest-detection-with-raspberry-pi">some folks have done it</a>!  More commonly, for embedded scenarios, it probably makes sense to use MegaDetector to generate bounding boxes on lots of images from your specific ecosystem, then use those boxes to train a smaller model that fits your embedded device's compute budget.
+* On a decent laptop (without a fancy deep learning GPU) that is neither the fastest nor slowest laptop you can buy in 2021, MegaDetector v4 takes somewhere between eight and twenty seconds per image, depending on how many CPUs you use.  This works out to being able to process somewhere between 4,000 and 10,000 image per day.  This might be totally fine for scenarios where you have even hundreds of thousands of images, as long as you can wait a few days.
+* On a dedicated deep learning GPU that is neither the fastest nor slowest GPU you can buy in 2021, MegaDetector v4 takes between 0.3 and 0.5 seconds per image, which works out to between 200,000 and 250,000 images per day.  We also include a few <a href="#benchmark-timings">benchmark timings</a> below on some specific GPUs.
+* MegaDetector v5 appears to consistently be around 3x-4x faster than MegaDetector v4, but it has not yet been widely benchmarked.
+
+We don't typically recommend running MegaDetector on embedded devices, although <a href="https://www.electromaker.io/project/view/whats-destroying-my-yard-pest-detection-with-raspberry-pi">some folks have done it</a>!  More commonly, for embedded scenarios, it probably makes sense to use MegaDetector to generate bounding boxes on lots of images from your specific ecosystem, then use those boxes to train a smaller model that fits your embedded device's compute budget.
 
 ### Benchmark timings
 
-We haven't done a lot of measurement on how long MegaDetector takes to run on "typical" GPUs, because we always use the same GPUs (we typically use 16 NVIDIA V100 GPUs to run large image batches in the cloud).  But we would like to start tracking this to help users make decisions about buying GPUs, so if you are using MegaDetector and have a GPU you're willing to benchmark on, <a href="mailto:cameratraps@lila.science">email us</a>!
+<i>Note that these numbers are for MDv4; we haven't formally benchmarked MDv5 yet, but it's consistently 3x-4x faster than MDv4, so if you're reading this between the release of MDv5 and the next time we update this list, scale accordingly.</i>
 
-But with a test batch of around 13,000 images from the public <a href="https://lila.science/datasets/snapshot-karoo">Snapshot Karoo</a> and <a href="http://lila.science/datasets/idaho-camera-traps/">Idaho Camera Traps</a> datasets:
+With a test batch of around 13,000 images from the public <a href="https://lila.science/datasets/snapshot-karoo">Snapshot Karoo</a> and <a href="http://lila.science/datasets/idaho-camera-traps/">Idaho Camera Traps</a> datasets:
 
-* An <a href="https://www.nvidia.com/en-us/data-center/v100/">NVIDIA V100</a> GPU processes around 2.79 images per second, or around 240,000 images per day
-* An <a href="https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3090/">NVIDIA RTX 3090</a> GPU processes around 3.24 images per second, or around 280,000 images per day
-* An <a href="https://www.nvidia.com/en-us/geforce/graphics-cards/rtx-2080-ti/">NVIDIA RTX 2080 Ti</a> GPU processes around 2.48 images per second, or around 214,000 images per day
-* An <a href="https://www.nvidia.com/en-us/geforce/graphics-cards/rtx-2060-super/">NVIDIA RTX 2060 SUPER</a> GPU processes around 1.64 images per second, or around 141,000 images per day
-* An <a href="https://www.nvidia.com/en-us/titan/titan-v/">NVIDIA Titan V</a> GPU processes around 1.9 images per second, or around 167,000 images per day
+* An <a href="https://www.nvidia.com/en-us/data-center/v100/">NVIDIA V100</a> processes around 2.79 images per second, or around 240,000 images per day (for MDv4)
+* An <a href="https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3090/">NVIDIA RTX 3090</a> processes ~3.24 images per second, or ~280,000 images per day (for MDv4)
+* An <a href="https://www.nvidia.com/en-us/geforce/graphics-cards/rtx-2080-ti/">NVIDIA RTX 2080 Ti</a> processes ~2.48 images per second, or ~214,000 images per day (for MDv4)
+* An <a href="https://www.nvidia.com/en-us/geforce/20-series/">NVIDIA RTX 2080</a> processes ~2.0 images per second, or ~171,000 images per day (for MDv4)
+* An <a href="https://www.nvidia.com/en-us/geforce/graphics-cards/rtx-2060-super/">NVIDIA RTX 2060 SUPER</a> processes ~1.64 images per second, or ~141,000 images per day (for MDv4)
+* An <a href="https://www.nvidia.com/en-us/titan/titan-v/">NVIDIA Titan V</a> processes ~1.9 images per second, or ~167,000 images per day (for MDv4)
+* An <a href="https://www.notebookcheck.net/NVIDIA-Quadro-T2000-Laptop-Graphics-Card.423971.0.html">NVIDIA Titan Quadro T2000</a> processes ~0.64 images per second, or ~55,200 images per day (for MDv4)
 
-If you want to run this benchmark on your own, here are <a href="download_megadetector_timing_benchmark_set.bat">azcopy commands</a> to download those 13,226 images, and we're happy to help you get MegaDetector running on your setup.  Or if you're using MegaDetector on other images with other GPUs, we'd love to include that data here as well.  <a href="mailto:cameratraps@lila.science">Email us</a>!
+If you want to run this benchmark on your own, here are <a href="https://github.com/microsoft/CameraTraps/blob/master/download_megadetector_timing_benchmark_set.bat">azcopy commands</a> to download those 13,226 images, and we're happy to help you get MegaDetector running on your setup.  Or if you're using MegaDetector on other images with other GPUs, we'd love to include that data here as well.  <a href="mailto:cameratraps@lila.science">Email us</a>!
 
 
 ## Who is using MegaDetector?
 
-See <a href="https://github.com/microsoft/CameraTraps/#who-is-using-the-ai-for-earth-camera-trap-tools">this list</a> on the repo's main page.
+See <a href="https://github.com/microsoft/CameraTraps/#who-is-using-megadetector">this list</a> on the repo's main page.
 
 
-## Downloading the model(s)
+## Downloading the model
+
+### MegaDetector v4.1, 2020.04.27
+
+#### Release notes
+
+This release incorporates additional training data from Borneo, Australia and the [WCS Camera Traps](http://lila.science/datasets/wcscameratraps) dataset, as well as images of humans in both daytime and nighttime. We also have a preliminary "vehicle" class for cars, trucks, and bicycles.
+
+#### Download links
+
+- [Frozen model (.pb)](https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/md_v4.1.0/md_v4.1.0.pb)
+- [TFODAPI config file](https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/md_v4.1.0/md_v4.1.0.config)
+- [Last checkpoint (for resuming training)](https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/md_v4.1.0/md_v4.1.0_checkpoint.zip)
+- [Tensorflow SavedModel for TFServing](https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/md_v4.1.0/md_v4.1.0_saved_model.zip) (inputs in uint8 format, `serving_default` output signature)
 
 ### MegaDetector v3, 2019.05.30
 
@@ -73,6 +96,8 @@ In addition to incorporating additional data, this release adds a preliminary "h
 - [Frozen model (.pb)](https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/megadetector_v3.pb)
 - [TFODAPI config file](https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/megadetector_v3.config)
 - [Last checkpoint (for resuming training)](https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/megadetector_v3_checkpoint.zip)
+- [TensorFlow SavedModel](https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/saved_model_normalized_megadetector_v3_tf19.tar.gz) (inputs in TF [common image format](https://www.tensorflow.org/hub/common_signatures/images#image_input), `default` output signature)
+- [Tensorflow SavedModel for TFServing](https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/saved_model_megadetector_v3_tf19.zip) (inputs in uint8 format, `serving_default` output signature)
 
 ### MegaDetector v2, 2018
 
@@ -87,23 +112,27 @@ First MegaDetector release!
 - [Last checkpoint (for resuming training)](https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/megadetector_v2_checkpoint.zip)
 
 
-## Using the models 
+## Using the model
 
-We provide three ways to apply this model to new images:
+We provide two ways to apply this model to new images:
 
-- To "test drive" this model on small sets of images and get super-satisfying visual output, we provide [run_tf_detector.py](https://github.com/Microsoft/CameraTraps/blob/master/detection/run_tf_detector.py), an example script for invoking this detector on new images.  This script doesn't depend on anything else in our repo, so you can download it and give it a try.  [Let us know](mailto:cameratraps@microsoft.com) how it works on your images!
-- To apply this model to larger image sets on a single machine, we recommend a slightly different script, [run_tf_detector_batch](https://github.com/Microsoft/CameraTraps/blob/master/detection/run_tf_detector_batch.py).  This outputs data in the same format as our [batch processing API](https://github.com/microsoft/CameraTraps/tree/master/api/batch_processing), so you can leverage all of our post-processing tools.
-- Speaking of which, when we process loads of images from collaborators, we use our [batch processing API](https://github.com/microsoft/CameraTraps/tree/master/api/batch_processing), which we can make available externally on request.  [Email us](mailto:cameratraps@microsoft.com) for more information.
+1. A simple test script that makes neat pictures with bounding boxes, but doesn't produce a useful output file ([run_detector.py](https://github.com/microsoft/CameraTraps/blob/master/detection/run_detector.py))
 
-<a href="https://colab.research.google.com/github/microsoft/CameraTraps/blob/master/detection/megadetector_colab.ipynb">
-  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab"/>
-</a>
+2. A script for running large batches of images on a local GPU ([run_detector_batch.py](https://github.com/microsoft/CameraTraps/blob/master/detection/run_detector_batch.py))
 
-2. A simple test script that makes neat pictures with bounding boxes, but doesn't produce a useful output file ([run_tf_detector.py](https://github.com/microsoft/CameraTraps/blob/master/detection/run_tf_detector.py)) 
-3. A script for running large batches of images on a local GPU ([run_tf_detector_batch.py](https://github.com/microsoft/CameraTraps/blob/master/detection/run_tf_detector_batch.py)) 
-4. A [batch processing API](https://github.com/microsoft/CameraTraps/tree/master/api/batch_processing) that runs images on many GPUs at once on Azure
+Before we add more detail, some bonus/third-party/unsupported tools for running MegaDetector:
 
-This section describes how to run the two scripts (options 2 and 3), including installing all the necessary Python dependencies. If your computer is also used for other Python projects, we recommend you set up the environment as described in the [Installation](https://github.com/microsoft/CameraTraps#installation) section of our main README, and use conda to set up a virtual environment in which to run scripts from this repo. This reduces potential version conflict headaches with your other projects. The environment file you should use to run the two scripts below is `environment-detector.yml`. You will still need to add the required repos to `PYTHONPATH`, but don't have to worry about installing Python, pip or any packages yourself.
+3. We developed a [batch processing API](https://github.com/microsoft/CameraTraps/tree/master/api/batch_processing) that runs images on many GPUs at once on Azure.  There is no public instance of this API, but the code allows you to stand up your own endpoint.  Likely only useful if you're processing millions of images in frequent, large batches.
+
+4. You can apply MegaDetector to some of your own images in Google Drive using this [Colab notebook](https://github.com/microsoft/CameraTraps/blob/master/detection/megadetector_colab.ipynb).
+
+<p style="margin-left:40px;"><a href="https://colab.research.google.com/github/microsoft/CameraTraps/blob/master/detection/megadetector_colab.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab"/></a></p>
+
+5. [Ben Evans](https://bencevans.io/) made a [pip-installable wrapper](https://github.com/bencevans/camtrapml) for MegaDetector (and other models).
+
+Also see the <a href="#is-there-a-gui">&ldquo;Is there a GUI?&rdquo;</a> section for graphical options.
+
+The remainder of this section provides instructions for our supported scripts (options 1 and 2 above), including installing all the necessary Python dependencies. If your computer is also used for other Python projects, we recommend you set up the environment as described in the [Installation](https://github.com/microsoft/CameraTraps#installation) section of our main README, and use conda to set up a virtual environment in which to run scripts from this repo. This reduces potential version conflict headaches with your other projects. The environment file you should use to run the two scripts below is `environment-detector.yml`. You will still need to add the required repos to `PYTHONPATH`, but don't have to worry about installing Python, pip or any packages yourself.
 
 ### 0. prerequisites
 
@@ -111,7 +140,7 @@ When we describe how to run our two inference scripts below, we assume the follo
 
 1. You have Python 3 installed.  We recommend installing [Anaconda](https://www.anaconda.com/products/individual), which is Python plus a zillion useful packages.
 2. You have downloaded our [MegaDetector model](https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/md_v4.1.0/md_v4.1.0.pb) to some location on your computer.
-3. You have cloned this git repo, and the [AI for Earth Utilities](http://github.com/microsoft/ai4eutils) repo.  If you're not familiar with git and are on a Windows machine, we recommend installing [Git for Windows](https://git-scm.com/download/win).  Specific instructions for checking out the repo will be rolled into the next step.
+3. You have cloned this git repo, and the [AI for Earth Utilities](http://github.com/microsoft/ai4eutils) repo.  If you're not familiar with git and are on a Windows machine, we recommend installing [Git for Windows](https://git-scm.com/download/win).  Specific instructions for cloning the repo are included in the command line instructions at the end of this step.
 4. You have added both directories where you cloned the two repos to your PYTHONPATH environment variable.  Here's a [good page](https://www.computerhope.com/issues/ch000549.htm) about editing environment variables in Windows.  You will need administrative access to your PC to set an environment variable.
 
 Here are Windows instructions for steps 3 and 4 that assume you *don't* have administrative access to your PC (if you set the environment variable as per above, you can skip the "set PYTHONPATH" step here).  We're going to clone the repos to "c:\git", but you can use any folder you like.
@@ -134,42 +163,41 @@ cd c:\git\cameratraps\api\batch_processing\postprocessing
 set PYTHONPATH=c:\git\cameratraps;c:\git\ai4eutils
 ```
 
-### 1. run_tf_detector.py
+### 1. run_detector.py
 
-To "test" this model on small sets of images and get super-satisfying visual output, we provide [run_tf_detector.py](https://github.com/Microsoft/CameraTraps/blob/master/detection/run_tf_detector.py), an example script for invoking this detector on new images.  This isn't how we recommend running lots of images through MegaDetector (see [run_tf_detector_batch.py](#2-run_tf_detector_batchpy) below for "real" usage), but it's a quick way to test things out.  [Let us know](mailto:cameratraps@lila.science) how it works on your images!
+To "test" this model on small sets of images and get super-satisfying visual output, we provide [run_detector.py](https://github.com/Microsoft/CameraTraps/blob/master/detection/run_detector.py), an example script for invoking this detector on new images.  This isn't how we recommend running lots of images through MegaDetector (see [run_detector_batch.py](#2-run_detector_batchpy) below for "real" usage), but it's a quick way to test things out.  [Let us know](mailto:cameratraps@lila.science) how it works on your images!
 
-#### Running run_tf_detector.py on Linux
+#### Running run_detector.py on Linux
 
 To try this out (on Linux), assuming you have Python 3 and pip installed, you can run the following:
 
 ```bash
 # Download the script and the MegaDetector model file
-wget https://raw.githubusercontent.com/microsoft/CameraTraps/master/detection/run_tf_detector_batch.py
+wget https://raw.githubusercontent.com/microsoft/CameraTraps/master/detection/run_detector.py
 wget https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/md_v4.1.0/md_v4.1.0.pb
 
 # Install dependencies
 pip install tensorflow pillow humanfriendly matplotlib tqdm jsonpickle statistics requests
 
 # Run MegaDetector
-python run_tf_detector.py md_v4.1.0.pb --image_file some_image_file.jpg
+python run_detector.py md_v4.1.0.pb --image_file some_image_file.jpg
 ```
 
-Run `python run_tf_detector.py` for a full list of options.
+Run `python run_detector.py` for a full list of options.
 
-#### Running run_tf_detector.py on Windows
+#### Running run_detector.py on Windows
 
 This assumes you've run the [prerequisites](#0-prerequisites) steps above.  After that, you can run the following in your Anaconda prompt:
 
 ```batch
-python c:\git\CameraTraps\detection\run_tf_detector.py c:\wherever\you\downloaded\the\detector\file\md_v4.1.0.pb --image_file some_image_file.jpg
+python c:\git\CameraTraps\detection\run_detector.py c:\wherever\you\downloaded\the\detector\file\md_v4.1.0.pb --image_file some_image_file.jpg
 ```
 
+### 2. run_detector_batch.py
 
-### 2. run_tf_detector_batch.py
+To apply this model to larger image sets on a single machine, we recommend a slightly different script, [run_detector_batch.py](https://github.com/Microsoft/CameraTraps/blob/master/detection/run_detector_batch.py).  This outputs data in the same format as our [batch processing API](https://github.com/microsoft/CameraTraps/tree/master/api/batch_processing), so you can leverage all of our post-processing tools.
 
-To apply this model to larger image sets on a single machine, we recommend a slightly different script, [run_tf_detector_batch.py](https://github.com/Microsoft/CameraTraps/blob/master/detection/run_tf_detector_batch.py).  This outputs data in the same format as our [batch processing API](https://github.com/microsoft/CameraTraps/tree/master/api/batch_processing), so you can leverage all of our post-processing tools.
-
-#### Running run_tf_detector_batch.py on Linux
+#### Running run_detector_batch.py on Linux
 
 To try this out (on Linux), assuming you have Python 3 and pip installed, you can do:
 
@@ -188,23 +216,60 @@ wget -O ~/md_v4.1.0.pb https://lilablobssc.blob.core.windows.net/models/camera_t
 pip install tensorflow pandas tqdm pillow humanfriendly matplotlib tqdm jsonpickle statistics requests
 
 # Run MegaDetector
-python CameraTraps/detection/run_tf_detector_batch.py ~/md_v4.1.0.pb some_image_file.jpg some_output_file.json
+python CameraTraps/detection/run_detector_batch.py ~/md_v4.1.0.pb some_image_file.jpg some_output_file.json
 ```
 
-Run `python run_tf_detector_batch.py` for a full list of options.
+Run `python run_detector_batch.py` for a full list of options.
 
-#### Running run_tf_detector_batch.py on Windows
+#### Running run_detector_batch.py on Windows
 
 This assumes you've run the [prerequisites](#0-prerequisites) steps above.  After that, you can run the following in your Anaconda prompt:
 
 ```batch
-python c:\git\CameraTraps\detection\run_tf_detector_batch.py c:\wherever\you\downloaded\the\detector\file\md_v4.1.0.pb some_image_folder some_output_file.json --output_relative_filenames --recursive
+python c:\git\CameraTraps\detection\run_detector_batch.py c:\wherever\you\downloaded\the\detector\file\md_v4.1.0.pb some_image_folder some_output_file.json --output_relative_filenames --recursive
 ```
 
+<b>If you are running very large batches, we strongly recommend adding the `--checkpoint_frequency` option to save checkpoints every N images</b> (you don't want to lose all the work your GPU has done if your computer crashes!).  10000 is a good value for checkpoint frequency; that will save the results every 10000 images.
 
-### 3. Batch processing API
 
-Speaking of lots of images, when we process loads of images from collaborators, we use our [batch processing API](https://github.com/microsoft/CameraTraps/tree/master/api/batch_processing), which we can make available externally on request.  [Email us](mailto:cameratraps@lila.science) for more information.
+## Is there a GUI?
+
+Not exactly... most of our users either use our Python tools to run MegaDetector or have us run MegaDetector for them (see [this page](collaborations.md) for more information about that), then most of those users use [Timelapse](https://saul.cpsc.ucalgary.ca/timelapse/) to use their MegaDetector results in an image review workflow.
+
+But we recognize that Python tools can be a bit daunting, so we're excited that a few different graphical tools have sprung up that allow you to run MegaDetector in a GUI:
+
+* [EcoAssist](https://github.com/PetervanLunteren/EcoAssist) is a GUI-based tool for running MegaDetector in MacOS environments
+* [MegaDetector-GUI](https://github.com/petargyurov/megadetector-gui) is a GUI-based tool for running MegaDetector in Windows environments
+* [Ben Evans](https://bencevans.io/) set up a [Web-based MegaDetector demo](https://replicate.com/bencevans/megadetector) at <replicate.com>, good for small-volume testing/demos
+* The [Zooniverse ML Subject Assistant](https://subject-assistant.zooniverse.org/#/intro) allows Zooniverse camera trap project owners to run MegaDetector and get "AI votes" on their camera trap images
+
+We haven't tried these, but they look great, and if you find them useful - or if you know of others - [let us know](mailto:cameratraps@lila.science)!
+
+
+## How do I use the results?
+
+See the ["How do people use MegaDetector results?"](https://github.com/microsoft/CameraTraps/blob/main/collaborations.md#how-people-use-megadetector-results) section of our "getting started" page.
+
+
+## Have you evaluated MegaDetector's accuracy?
+
+Internally, we track metrics on a validation set when we train MegaDetector, but we can't stress enough how much performance of any AI system can vary in new environments, so if we told you "99.9999% accurate" or "50% accurate", etc., we would immediately follow that up with "but don't believe us: try it in your environment!"
+
+Consequently, when we work with new users, we always start with a "test batch" to get a sense for how well MegaDetector works for <i>your</i> images.  We make this as quick and painless as possible, so that in the (hopefully rare) cases where MegaDetector will not help you, we find that out quickly.
+
+All of those caveats aside, we are aware of some external validation studies... and we'll list them here... but still, try MegaDetector on your images before you assume any performance numbers!
+
+* Fennell M, Beirne C, Burton AC. [Use of object detection in camera trap image identification: assessing a method to rapidly and accurately classify human and animal detections for research and application in recreation ecology](https://www.sciencedirect.com/science/article/pii/S2351989422001068?via%3Dihub). Global Ecology and Conservation. 2022 Mar 25:e02104.
+* Vélez J, Castiblanco-Camacho PJ, Tabak MA, Chalmers C, Fergus P, Fieberg J.  [Choosing an Appropriate Platform and Workflow for Processing Camera Trap Data using Artificial Intelligence](https://arxiv.org/abs/2202.02283). arXiv. 2022 Feb 4.
+* [github.com/FFI-Vietnam/camtrap-tools](https://github.com/FFI-Vietnam/camtrap-tools) (includes an evaluation of MegaDetector)
+
+Bonus... this paper is not a formal review, but includes a thorough case study around MegaDetector:
+
+* Tuia D, Kellenberger B, Beery S, Costelloe BR, Zuffi S, Risse B, Mathis A, Mathis MW, van Langevelde F, Burghardt T, Kays R. [Perspectives in machine learning for wildlife conservation](https://www.nature.com/articles/s41467-022-27980-y). Nature Communications. 2022 Feb 9;13(1):1-5.
+
+If you know of other validation studies that have been published, [let us know](mailto:cameratraps@lila.science)!
+
+P.S. Really, don't trust results from one ecosystem and assume they will hold in another. [This paper](https://openaccess.thecvf.com/content_ECCV_2018/html/Beery_Recognition_in_Terra_ECCV_2018_paper.html) is about just how catastrophically bad AI models for camera trap images <i>can</i> fail to generalize to new locations.  We hope that's not the case with MegaDetector!  But don't assume.
 
 
 ## Citing MegaDetector
@@ -224,6 +289,7 @@ If you use the MegaDetector in a publication, please cite:
 
 Can do!  See these [slides](http://dmorris.net/misc/cameratraps/ai4e_camera_traps_overview).
 
+
 ## Pretty picture
 
 Here's a "teaser" image of what detector output looks like:
@@ -232,3 +298,37 @@ Here's a "teaser" image of what detector output looks like:
 
 Image credit University of Washington.
 
+
+## Mesmerizing video
+
+Here's a neat [video](http://dmorris.net/video/detector_video.html) of our v2 detector running in a variety of ecosystems, on locations unseen during training.
+
+<a href="http://dmorris.net/video/detector_video.html">
+<img width=600 src="http://dmorris.net/video/detector_video_thumbnail.png">
+</a>
+
+Image credit [eMammal](https://emammal.si.edu/).
+
+
+## Can you share the training data?
+
+This model is trained on bounding boxes from a variety of ecosystems, and many of the images we use in training are not publicly-shareable for license reasons.  But in addition to the private training data we use, we also use many of the bounding boxes available on lila.science:
+
+<https://lila.science/category/camera-traps/>
+
+Specifically, MegaDetector v4 was trained on private data, plus some data from:
+
+* Caltech Camera Traps
+* Snapshot Serengeti
+* WCS Camera Traps
+* NACTI (North American Camera Trap Images)
+* Island Conservation Camera Traps
+* Idaho Camera Traps
+
+For posterity, MegaDetector v3 was trained on private data, plus some data from:
+
+* Caltech Camera Traps
+* Snapshot Serengeti
+* Idaho Camera Traps
+
+So if MegaDetector performs really well on those data sets, that's great, but it's a little bit cheating, because we haven't published the set of locations from those data sets that we use during training.

@@ -69,6 +69,9 @@ warnings.filterwarnings('ignore', category=FutureWarning)
 FAILURE_INFER = 'Failure inference'
 FAILURE_IMAGE_OPEN = 'Failure image access'
 
+DEFAULT_RENDERING_CONFIDENCE_THRESHOLD = 0.85  # to render bounding boxes
+DEFAULT_OUTPUT_CONFIDENCE_THRESHOLD = 0.01  # to include in the output json file
+
 # Number of decimal places to round to for confidence and bbox coordinates
 CONF_DIGITS = 3
 COORD_DIGITS = 4
@@ -80,9 +83,6 @@ DEFAULT_DETECTOR_LABEL_MAP = {
     '3': 'vehicle'  # available in megadetector v4+
 }
 
-# Should we allow classes that don't look anything like the MegaDetector classes?
-USE_MODEL_NATIVE_CLASSES = False
-
 # Each version of the detector is associated with some "typical" values
 # that are included in output files, so that downstream applications can 
 # use them as defaults.
@@ -90,31 +90,25 @@ DETECTOR_METADATA = {
     'v2.0.0':
         {'megadetector_version':'v2.0.0',
          'typical_detection_threshold':0.8,
-         'conservative_detection_threshold':0.3},
+         'conservative_detection_threshold':0.6},
     'v3.0.0':
         {'megadetector_version':'v3.0.0',
          'typical_detection_threshold':0.8,
-         'conservative_detection_threshold':0.3},
+         'conservative_detection_threshold':0.6},
     'v4.1.0':
         {'megadetector_version':'v4.1.0',
          'typical_detection_threshold':0.8,
-         'conservative_detection_threshold':0.3},
+         'conservative_detection_threshold':0.6},
     'v5a.0.0':
         {'megadetector_version':'v5a.0.0',
-         'typical_detection_threshold':0.2,
-         'conservative_detection_threshold':0.05},
+         'typical_detection_threshold':0.25,
+         'conservative_detection_threshold':0.1},
     'v5b.0.0':
         {'megadetector_version':'v5b.0.0',
-         'typical_detection_threshold':0.2,
-         'conservative_detection_threshold':0.05}
+         'typical_detection_threshold':0.25,
+         'conservative_detection_threshold':0.1}    
 }
 
-DEFAULT_RENDERING_CONFIDENCE_THRESHOLD = DETECTOR_METADATA['v5b.0.0']['typical_detection_threshold']
-DEFAULT_OUTPUT_CONFIDENCE_THRESHOLD = 0.005
-
-DEFAULT_BOX_THICKNESS = 4
-DEFAULT_BOX_EXPANSION = 0
-    
 
 #%% Classes
 
@@ -159,20 +153,6 @@ class ImagePathUtils:
 
 #%% Utility functions
 
-def convert_to_tf_coords(array):
-    """From [x1, y1, width, height] to [y1, x1, y2, x2], where x1 is x_min, x2 is x_max
-
-    This is only used to keep the interface of the synchronous API.
-    """
-    x1 = array[0]
-    y1 = array[1]
-    width = array[2]
-    height = array[3]
-    x2 = x1 + width
-    y2 = y1 + height
-    return [y1, x1, y2, x2]
-
-
 def get_detector_metadata_from_version_string(detector_version):
     """
     Given a MegaDetector version string (e.g. "v4.1.0"), return the metadata for
@@ -180,10 +160,7 @@ def get_detector_metadata_from_version_string(detector_version):
     """
     if detector_version not in DETECTOR_METADATA:
         print('Warning: no metadata for unknown detector version {}'.format(detector_version))
-        default_detector_metadata = {
-            'megadetector_version':'unknown'
-        }
-        return default_detector_metadata
+        return None
     else:
         return DETECTOR_METADATA[detector_version]
 
@@ -223,28 +200,6 @@ def get_detector_version_from_filename(detector_filename):
     else:
         return known_model_versions[matches[0]]
     
-
-def get_typical_confidence_threshold_from_results(results):
-    """
-    Given the .json data loaded from a MD results file, determine a typical confidence
-    threshold based on the detector version.
-    """
-    if 'detector_metadata' in results['info'] and \
-        'typical_detection_threshold' in results['info']['detector_metadata']:
-        default_threshold = results['info']['detector_metadata']['typical_detection_threshold']
-    elif ('detector' not in results['info']) or (results['info']['detector'] is None):
-        print('Warning: detector version not available in results file, using MDv5 defaults')
-        detector_metadata = get_detector_metadata_from_version_string('v5a.0.0')
-        default_threshold = detector_metadata['typical_detection_threshold']
-    else:
-        print('Warning: detector metadata not available in results file, inferring from MD version')
-        detector_filename = results['info']['detector']
-        detector_version = get_detector_version_from_filename(detector_filename)
-        detector_metadata = get_detector_metadata_from_version_string(detector_version)
-        default_threshold = detector_metadata['typical_detection_threshold']
-
-    return default_threshold    
-
     
 def is_gpu_available(model_file):
     """Decide whether a GPU is available, importing PyTorch or TF depending on the extension

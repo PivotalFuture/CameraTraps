@@ -207,7 +207,9 @@ url_to_all_images_processed = output_files['images']
 
 ```
 
-These URLs are valid for 90 days from the time the request has finished. If you neglected to retrieve them before the links expired, contact us with the RequestID and we can send the results to you. Here are the 3 files to expect:
+The URL to the output file is valid for 180 days from the time the request has finished. If you neglected to retrieve them before the link expired, contact us with the RequestID and we can send the results to you. 
+
+The output file is a JSON in the format described below.
 
 
 | File name                | Description | 
@@ -230,11 +232,19 @@ The output of the detector is saved in `RequestID_detections.csv`. It looks like
 ```json
 {
     "info": {
-        "detector": "megadetector_v3",
+        "format_version": "1.2",
+        "detector": "md_v4.1.0.pb",
         "detection_completion_time": "2019-05-22 02:12:19",
         "classifier": "ecosystem1_v2",
         "classification_completion_time": "2019-05-26 01:52:08",
-        "format_version": "1.0"
+        "detector_metadata": {
+           "megadetector_version":"v4.1.0",
+           "typical_detection_threshold":0.8,
+           "conservative_detection_threshold":0.6
+        }
+        "classifier_metadata": {
+           "typical_classification_threshold":0.75
+        }
     },
     "detection_categories": {
         "1": "animal",
@@ -283,7 +293,22 @@ The output of the detector is saved in `RequestID_detections.csv`. It looks like
 
 The second column is the confidence value of the most confident detection on the image (all detections above confidence 0.05 are included so you can select a confidence threshold for determining empty from non-empty).
 
-The third column contains details of the detections so you can visualize them. It is a stringfied json of a list of lists, representing the detections made on that image. Each detection list has the coordinates of the bounding box surrounding the detection, followed by its confidence:
+The 'detector' field (within the 'info' field) specifies the filename of the detector model that produced this results file.  It was omitted in old files generated with run_detector_batch.py, so with extremely high probability, if this field is not present, you can assume the file was generated with MegaDetector v4.
+
+In newer files, this should contain the filename (base name only) of the model file, which typically will be one of:
+
+* megadetector_v4.1 (MegaDetector v4, run via the batch API) 
+* md_v4.1.0.pb (MegaDetector v4, run locally) 
+* md_v5a.0.0.pt (MegaDetector v5a) 
+* md_v5b.0.0.pt (MegaDetector v5b) 
+
+This string is used by some tools to choose appropriate default confidence values, which depend on the model version.  If you change the name of the MegaDetector file, you will break this convention, and YMMV.
+ 
+The "detector_metadata" and "classifier_metadata" fields are also optionally added as of format version 1.2.  These currently contain useful default confidence values for downstream tools (particularly Timelapse), but we strongly recommend against blindly trusting these defaults; always explore your data before choosing a confidence threshold, as the optimal value can vary widely.
+
+##### Detector outputs
+
+The bounding box in the `bbox` field is represented as
 
 ```
 [x_min, y_min, width_of_box, height_of_box]

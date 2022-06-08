@@ -66,12 +66,12 @@ force_cpu = False
 if force_cpu:
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-import detection.run_detector as run_detector
-from detection.run_detector import ImagePathUtils,\
-    is_gpu_available,\
+from detection.run_detector import ImagePathUtils, is_gpu_available,\
     load_detector,\
     get_detector_version_from_filename,\
-    get_detector_metadata_from_version_string
+    get_detector_metadata_from_version_string,\
+    FAILURE_INFER, FAILURE_IMAGE_OPEN,\
+    DEFAULT_OUTPUT_CONFIDENCE_THRESHOLD, DEFAULT_DETECTOR_LABEL_MAP
 
 import visualization.visualization_utils as viz_utils
 
@@ -464,7 +464,7 @@ def write_results_to_file(results, output_file, relative_path_base=None,
     """
     Writes list of detection results to JSON output file. Format matches:
 
-    https://github.com/ecologize/CameraTraps/tree/master/api/batch_processing#batch-processing-api-output-format
+    https://github.com/microsoft/CameraTraps/tree/master/api/batch_processing#batch-processing-api-output-format
 
     Args
     - results: list of dict, each dict represents detections on one image
@@ -480,8 +480,20 @@ def write_results_to_file(results, output_file, relative_path_base=None,
             results_relative.append(r_relative)
         results = results_relative
 
-    # The typical case: we need to build the 'info' struct
-    if info is None:
+    info = { 
+        'detection_completion_time': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+        'format_version': '1.2' 
+    }
+    
+    if detector_file is not None:
+        detector_filename = os.path.basename(detector_file)
+        detector_version = get_detector_version_from_filename(detector_filename)
+        detector_metadata = get_detector_metadata_from_version_string(detector_version)
+        info['detector'] = detector_filename  
+        info['detector_metadata'] = detector_metadata
+    else:
+        info['detector'] = 'unknown'
+        info['detector_metadata'] = 'unknown'
         
         info = { 
             'detection_completion_time': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
