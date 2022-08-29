@@ -109,6 +109,9 @@ DETECTOR_METADATA = {
 DEFAULT_RENDERING_CONFIDENCE_THRESHOLD = DETECTOR_METADATA['v5b.0.0']['typical_detection_threshold']
 DEFAULT_OUTPUT_CONFIDENCE_THRESHOLD = 0.01  # to include in the output json file
 
+DEFAULT_BOX_THICKNESS = 4
+DEFAULT_BOX_EXPANSION = 0
+
 
 #%% Classes
 
@@ -254,7 +257,7 @@ def load_detector(model_file, force_cpu=False):
 def load_and_run_detector(model_file, image_file_names, output_dir,
                           render_confidence_threshold=DEFAULT_RENDERING_CONFIDENCE_THRESHOLD,
                           crop_images=False, box_thickness=DEFAULT_BOX_THICKNESS, 
-                          box_expansion=DEFAULT_BOX_EXPANSION, image_size=None
+                          box_expansion=DEFAULT_BOX_EXPANSION,
                           ):
     """Load and run detector on target images, and visualize the results."""
     
@@ -367,9 +370,9 @@ def load_and_run_detector(model_file, image_file_names, output_dir,
 
                 # Image is modified in place
                 viz_utils.render_detection_bounding_boxes(result['detections'], image,
-                            label_map=DEFAULT_DETECTOR_LABEL_MAP,
-                            confidence_threshold=render_confidence_threshold,
-                            thickness=box_thickness, expansion=box_expansion)
+                                                          label_map=DEFAULT_DETECTOR_LABEL_MAP,
+                                                          confidence_threshold=render_confidence_threshold,
+                                                          thickness=box_thickness, expansion=box_expansion)
                 output_full_path = input_file_to_detection_file(im_file)
                 image.save(output_full_path)
 
@@ -424,12 +427,6 @@ def main():
     parser.add_argument(
         '--output_dir',
         help='Directory for output images (defaults to same as input)')
-    
-    parser.add_argument(
-        '--image_size',
-        type=int,
-        default=None,
-        help=('Force image resizing to a (square) integer size (not recommended to change this)'))
     
     parser.add_argument(
         '--threshold',
@@ -492,8 +489,7 @@ def main():
                           render_confidence_threshold=args.threshold,
                           box_thickness=args.box_thickness,
                           box_expansion=args.box_expansion,                          
-                          crop_images=args.crop,
-                          image_size=args.image_size)
+                          crop_images=args.crop)
 
 
 if __name__ == '__main__':

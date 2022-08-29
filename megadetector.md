@@ -7,7 +7,7 @@
 5. [Downloading the model](#downloading-the-model)
 6. [Using the model](#using-the-model)
 7. [Is there a GUI?](#is-there-a-gui)
-8.  [How do I use the results?](#how-do-i-use-the-results)
+8. [How do I use the results?](#how-do-i-use-the-results)
 9. [Have you evaluated MegaDetector's accuracy?](#have-you-evaluated-megadetectors-accuracy)
 10. [Citing MegaDetector](#citing-megadetector)
 11. [Tell me more about why detectors are a good first step for camera trap images](#tell-me-more-about-why-detectors-are-a-good-first-step-for-camera-trap-images)
@@ -271,10 +271,29 @@ Not exactly... most of our users either use our Python tools to run MegaDetector
 
 But we recognize that Python tools can be a bit daunting, so we're excited that a few different graphical tools have sprung up that allow you to run MegaDetector in a GUI:
 
-* [EcoAssist](https://github.com/PetervanLunteren/EcoAssist) is a GUI-based tool for running MegaDetector in MacOS environments
-* [MegaDetector-GUI](https://github.com/petargyurov/megadetector-gui) is a GUI-based tool for running MegaDetector in Windows environments
-* [Ben Evans](https://bencevans.io/) set up a [Web-based MegaDetector demo](https://replicate.com/bencevans/megadetector) at <replicate.com>, good for small-volume testing/demos
-* The [Zooniverse ML Subject Assistant](https://subject-assistant.zooniverse.org/#/intro) allows Zooniverse camera trap project owners to run MegaDetector and get "AI votes" on their camera trap images
+### Tools for running MegaDetector locally
+
+* [EcoAssist](https://github.com/PetervanLunteren/EcoAssist) is a GUI-based tool for running MegaDetector in MacOS environments (MDv4 only as far as we know)
+* [MegaDetector-GUI](https://github.com/petargyurov/megadetector-gui) is a GUI-based tool for running MegaDetector in Windows environments (MDv4 only as far as we know)
+
+### Interactive demos/APIs
+
+* [Hendry Lydecker](https://github.com/hlydecker) set up a [Hugging Face app](https://huggingface.co/spaces/hlydecker/MegaDetector_v5) for running MDv5
+* [Ben Evans](https://bencevans.io/) set up a [Web-based MegaDetector demo](https://replicate.com/bencevans/megadetector) at [replicate.com](https://replicate.com)
+
+### Cloud-based platforms that leverage MegaDetector
+
+It's not quite as simple as "these platforms all run MegaDetector on your images", but to varying degrees, all of the following online platforms use MegaDetector:
+
+* [Wildlife Insights](https://wildlifeinsights.org/)
+* [TrapTagger](https://wildeyeconservation.org/trap-tagger-about/)
+* [WildTrax](https://www.wildtrax.ca/)
+* [Camelot](https://camelotproject.org/)
+* [WildePod](https://wildepod.org/)
+* [wpsWatch](https://wildlifeprotectionsolutions.org/wpswatch/)
+* [Animl](https://github.com/tnc-ca-geo/animl-frontend)
+* [Cam-WON](https://wildlifeobserver.net/)
+* [Zooniverse ML Subject Assistant](https://subject-assistant.zooniverse.org/#/intro)
 
 We haven't tried these, but they look great, and if you find them useful - or if you know of others - [let us know](mailto:cameratraps@lila.science)!
 
