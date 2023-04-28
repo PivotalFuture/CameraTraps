@@ -18,13 +18,13 @@ All of our work in this space is open-sourced here:
 
 Basically this page is the response we give when someone emails us and says "I have too many camera trap images!  Can you help me?!?!".  If you're an ecologist reading this page, and that sounds familiar, feel free to answer the questions below in an email to <a href="mailto:cameratraps@lila.science">cameratraps@lila.science</a>.
 
-The core of our work is a model &ndash; we call it the &ldquo;MegaDetector&rdquo; &ndash; that we use to separate images that are empty/animals/people/vehicles:
+You can see a list of some of the organizations who have used our tools [here](https://github.com/ecologize/CameraTraps/#who-is-using-megadetector).
 
 &nbsp;&nbsp;&nbsp;&nbsp;<https://github.com/microsoft/CameraTraps/blob/master/megadetector.md>
 
 Watch the fun video there and you&rsquo;ll get the idea.  Note that this model does not identify specific species.  We believe there will never be a one-size-fits-all species classifier for the whole world, but at this more generic level, we can help people in lots of ecosystems without training custom models for each project.  
 
-Of course, a machine learning model isn&rsquo;t useful to most ecologists by itself, so we “package” this model in a variety of ways.  For most of our collaborators, they send us images (anywhere from thousands to millions), which we run through this detector in the cloud, then we send back a results file, and we&rsquo;ve integrated with a variety of tools that camera trap researchers already use, to make it relatively painless to use our results in the context of a real workflow.  Our most mature integration is with an open-source tool called <a href="http://saul.cpsc.ucalgary.ca/timelapse/">Timelapse</a>:
+MegaDetector is a publicly-available model, and there are instructions [here](https://github.com/ecologize/CameraTraps/blob/main/megadetector.md#using-the-model) for running it using our Python scripts.  Many of our users run MegaDetector on their own, either on the cloud or on their local computers.
 
 &nbsp;&nbsp;&nbsp;&nbsp;<https://github.com/microsoft/CameraTraps/blob/master/api/batch_processing/integration/timelapse.md>
 
@@ -38,9 +38,9 @@ We also package our camera trap model into two different APIs: a batch processin
 
 A slightly more detailed description of this work is available here, including a list of some of the organizations currently leveraging our tools:
 
-&nbsp;&nbsp;&nbsp;&nbsp;<https://medium.com/microsoftazure/accelerating-biodiversity-surveys-with-azure-machine-learning-9be53f41e674>
+Of course, running MegaDetector doesn't do anything useful by itself: it just produces a file that tells you which images MegaDetector thinks have animals/people/vehicles in them.  You still need a way to use that file in a real image processing workflow.  We've integrated with a variety of tools that camera trap researchers already use, to make it relatively painless to use our results in the context of a real workflow.  Our most mature integration is with <a href="http://saul.cpsc.ucalgary.ca/timelapse/">Timelapse</a>, a fantastic open-source tool for reviewing camera trap images (very efficient even if you're not using AI!).  Read more about how to use MegaDetector results with Timelapse [here](https://github.com/ecologize/CameraTraps/blob/master/api/batch_processing/integration/timelapse.md).
 
-Usually the first step with a new collaborator is just running our model on a few thousand images and seeing what happens, so if you&rsquo;re interested in trying this on your images, we can work out a way to transfer a set of example images.
+We have somewhat-less-complete integrations with the [eMammal desktop application](https://github.com/ecologize/CameraTraps/blob/master/api/batch_processing/integration/eMammal) and with [digiKam](https://github.com/ecologize/CameraTraps/tree/master/api/batch_processing/integration/digiKam).
 
 After that, we&rsquo;ll typically send back a page of sample results; depending on whether you already know the &ldquo;right&rdquo; answer for these images, the results will look like one of these:
 

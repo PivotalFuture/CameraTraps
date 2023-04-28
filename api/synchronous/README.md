@@ -25,14 +25,16 @@ Build the Docker image
 
 - Build our custom base Docker image to solve TensorFlow version and GPU finding issues. From the Framework repo's `Containers` directory,
 ```bash
-sudo docker build . -f base-py/Dockerfile --build-arg BASE_IMAGE=tensorflow/tensorflow:1.14.0-gpu-py3 -t yasiyu.azurecr.io/aiforearth/tensorflow:1.14.0-gpu-py3
+git clone "https://github.com/ecologize/CameraTraps/"
+cd CameraTraps
 ```
 
 We call our base image `yasiyu.azurecr.io/aiforearth/tensorflow:1.14.0-gpu-py3` and it's used as the base image in the API's Dockerfile.
 
 - Name the API's Docker image; modify its version and build number as needed:
 ```bash
-export API_DOCKER_IMAGE=yasiyu.azurecr.io/camera-trap/2.0-detection-sync:1
+wget "https://github.com/ecologize/CameraTraps/releases/download/v5.0/md_v5a.0.0.pt" -O api/synchronous/api_core/animal_detection_api/model/md_v5a.0.0.pt
+wget "https://github.com/ecologize/CameraTraps/releases/download/v5.0/md_v5b.0.0.pt" -O api/synchronous/api_core/animal_detection_api/model/md_v5b.0.0.pt
 ```
 
 - Modify the Docker image's version and build number (as well as registry name) in `api_core/build_docker.sh` and run it to build the API's Docker image:

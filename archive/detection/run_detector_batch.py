@@ -464,7 +464,7 @@ def write_results_to_file(results, output_file, relative_path_base=None,
     """
     Writes list of detection results to JSON output file. Format matches:
 
-    https://github.com/microsoft/CameraTraps/tree/master/api/batch_processing#batch-processing-api-output-format
+    https://github.com/ecologize/CameraTraps/tree/master/api/batch_processing#batch-processing-api-output-format
 
     Args
     - results: list of dict, each dict represents detections on one image

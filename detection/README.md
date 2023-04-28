@@ -1,14 +1,35 @@
 # To start a new detection project:
 
-## Create COCO-CameraTraps style json database for your data
-Use code from "database_tools" and/or "annotation"
+This folder contains scripts and configuration files for training and evaluating [MegaDetector](https://github.com/ecologize/CameraTraps/blob/main/megadetector.md).  If you are looking to <b>use</b> MegaDetector, you probably don't want to start with this page; instead, start with the [MegaDetector page](https://github.com/ecologize/CameraTraps/blob/main/megadetector.md).  If you are looking to fine-tune MegaDetector on new data, you also don't want to start with this page; instead, start with the [YOLOv5 training guide](https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data).
 
 ## Follow installation instructions
 
 TFODAPI works best in python 2.7.  tfrecords files require python 2.7.  
 TFODAPI requires Tensorflow >= 1.9.0
 
-Follow [installation instructions for TFODAPI](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/installation.md)
+# Contents of this folder
+
+- `detector_training/experiments/`: a folder for storing the model configuration files defining the architecture and (loosely, since learning rate is often adjusted manually) the training scheme. Each new detector project or update is in a subfolder, which could contain a number of folders for various experiments done for that project/update. Not every run's configuration file needs to be recorded here (e.g. adjusting learning rate, new starting checkpoint), since TFODAPI copies `pipeline.config` to the model output folder at the beginning of the run; the configuration files here record high-level info such as model architecture. 
+
+- `detector_eval/`: scripts for evaluating various aspects of the detector's performance. We use to evaluate test set images stored in TF records, but now we use the batch processing API to process the test set images stored individually in blob storage. Functions in `detector_eval.py` works with the API's output format and the ground truth format from querying the MegaDB (described below).
+
+- `run_detector.py`: the simplest demonstration of how to invoke a detector.
+
+- `run_detector_batch.py`: runs the detector on a collection images; output format is documented [here](https://github.com/ecologize/CameraTraps/tree/main/api/batch_processing/#batch-processing-api-output-format).
+
+# Training MegaDetector
+
+## Assembling the training data set
+
+These steps document the steps taken to assemble the training data set when MDv5 was trained at Microsoft; this section is not meaningful outside of Microsoft.
+
+### Query MegaDB for the images of interest
+
+Use `data_management/megadb/query_script.py` to query for all desired image entries. Write the query to use or select one from the examples at the top of the script. You may need to adjust the code parsing the query's output if you are using a new query. Fill in the output directory and other parameters also near the top of the script. 
+
+To get labels for training  MegaDetector, use the query `query_bbox`. Note that to include images that were sent for annotation and were confirmed to be empty, make sure to specify `ARRAY_LENGTH(im.bbox) >= 0` to include the ones whose `bbox` field is an empty list. 
+
+Running this query will take about 10+ minutes; this is a relatively small query so no need to increase the throughput of the database. The output is a JSON file containing a list, where each entry is the label for an image:
  
 If you are having protobuf errors, install protocol buffers from binary as described [here](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/installation.md)
 

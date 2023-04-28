@@ -6,9 +6,7 @@
 # that might be "repeated false positives", i.e. that random branch that it
 # really thinks is an animal.
 #
-# Writes out a new .csv file where "suspicious" detections have had their
-# probabilities multiplied by -1.  Optionally (and slowly) also writes an html
-# result set so you can examine what was deemed "suspicious"
+# https://github.com/ecologize/CameraTraps/tree/master/api/batch_processing/postprocessing/repeat_detection_elimination.ms
 #
 # Currently the unit within which images are compared is a *directory*.
 #
