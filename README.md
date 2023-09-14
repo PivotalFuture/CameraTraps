@@ -1,8 +1,7 @@
 # Announcement 
 MegaDetector is getting reworked! Learn more about the development of the reworked Python package in this monthly roadmap! You can also visit the [planning document](roadmap/PyTorchWildlife_plan.pdf) for more information.
 # Roadmap
-
-<img src="roadmap/10_TorchWildlifeRoadmap_October.png" width="800">
+<img src="roadmap/10_TorchWildlifeRoadmap_October.png" width="700">
 
 [November 2023 roadmap](roadmap/11_TorchWildlifeRoadmap_November.png)
 
