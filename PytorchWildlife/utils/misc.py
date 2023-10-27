@@ -5,7 +5,6 @@
 
 import numpy as np
 from tqdm import tqdm
-import cv2
 from typing import Callable
 from supervision import VideoInfo, VideoSink, get_video_frames_generator
 
@@ -19,7 +18,7 @@ def process_video(
     target_path: str,
     callback: Callable[[np.ndarray, int], np.ndarray],
     target_fps: int = 1,
-    codec: str = "mp4v"
+    codec: str = "avc1"
 ) -> None:
     """
     Process a video frame-by-frame, applying a callback function to each frame and saving the results 
@@ -36,7 +35,6 @@ def process_video(
             Codec used to encode the processed video. Default is "avc1".
     """
     source_video_info = VideoInfo.from_video_path(video_path=source_path)
-    
     if source_video_info.fps > target_fps:
         stride = int(source_video_info.fps / target_fps)
         source_video_info.fps = target_fps
@@ -49,5 +47,5 @@ def process_video(
                 get_video_frames_generator(source_path=source_path, stride=stride)
             ):
                 result_frame = callback(frame, index)
-                sink.write_frame(frame=cv2.cvtColor(result_frame, cv2.COLOR_RGB2BGR))
+                sink.write_frame(frame=result_frame)
                 pbar.update(1)

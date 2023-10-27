@@ -2,11 +2,9 @@
 # Licensed under the MIT License.
 
 import os
-from glob import glob
 from PIL import Image
 import numpy as np
 import supervision as sv
-import torch
 from torch.utils.data import Dataset
 
 # Making the DetectionImageFolder class available for import from this module
@@ -14,16 +12,6 @@ __all__ = [
     "DetectionImageFolder",
     ]
 
-# Define the allowed image extensions  
-IMG_EXTENSIONS = (".jpg", ".jpeg", ".png", ".ppm", ".bmp", ".pgm", ".tif", ".tiff", ".webp")  
-  
-def has_file_allowed_extension(filename: str, extensions: tuple) -> bool:  
-    """Checks if a file is an allowed extension."""  
-    return filename.lower().endswith(extensions if isinstance(extensions, str) else tuple(extensions))
-  
-def is_image_file(filename: str) -> bool:  
-    """Checks if a file is an allowed image extension."""  
-    return has_file_allowed_extension(filename, IMG_EXTENSIONS) 
 
 class DetectionImageFolder(Dataset):
     """
@@ -40,10 +28,10 @@ class DetectionImageFolder(Dataset):
             image_dir (str): Path to the directory containing the images.
             transform (callable, optional): Optional transform to be applied on the image.
         """
-        super(DetectionImageFolder, self).__init__()
         self.image_dir = image_dir
+        # Listing and sorting all image files in the specified directory
+        self.images = sorted(os.listdir(self.image_dir))
         self.transform = transform
-        self.images = [os.path.join(dp, f) for dp, dn, filenames in os.walk(image_dir) for f in filenames if is_image_file(f)] # dp: directory path, dn: directory name, f: filename
 
     def __getitem__(self, idx):
         """
@@ -56,17 +44,19 @@ class DetectionImageFolder(Dataset):
             tuple: Contains the image data, the image's path, and its original size.
         """
         # Get image filename and path
-        img_path = self.images[idx]
-
+        img = self.images[idx]
+        img_path = os.path.join(self.image_dir, img)
+        
         # Load and convert image to RGB
         img = Image.open(img_path).convert("RGB")
-        img_size_ori = img.size[::-1]
+        img = np.asarray(img)
+        img_size_ori = img.shape
         
         # Apply transformation if specified
         if self.transform:
             img = self.transform(img)
 
-        return img, img_path, torch.tensor(img_size_ori)
+        return img, img_path, np.array(img_size_ori)
     
     def __len__(self):
         """
@@ -77,7 +67,7 @@ class DetectionImageFolder(Dataset):
         """
         return len(self.images)
 
-# TODO: Under development for efficiency improvement
+
 class DetectionCrops(Dataset):
 
     def __init__(self, detection_results, transform=None, path_head=None, animal_cls_id=0):
