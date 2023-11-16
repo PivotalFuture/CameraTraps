@@ -80,6 +80,9 @@ DEFAULT_DETECTOR_LABEL_MAP = {
     '3': 'vehicle'  # available in megadetector v4+
 }
 
+# Should we allow classes that don't look anything like the MegaDetector classes?
+USE_MODEL_NATIVE_CLASSES = False
+
 # Each version of the detector is associated with some "typical" values
 # that are included in output files, so that downstream applications can 
 # use them as defaults.
@@ -87,31 +90,31 @@ DETECTOR_METADATA = {
     'v2.0.0':
         {'megadetector_version':'v2.0.0',
          'typical_detection_threshold':0.8,
-         'conservative_detection_threshold':0.6},
+         'conservative_detection_threshold':0.3},
     'v3.0.0':
         {'megadetector_version':'v3.0.0',
          'typical_detection_threshold':0.8,
-         'conservative_detection_threshold':0.6},
+         'conservative_detection_threshold':0.3},
     'v4.1.0':
         {'megadetector_version':'v4.1.0',
          'typical_detection_threshold':0.8,
-         'conservative_detection_threshold':0.6},
+         'conservative_detection_threshold':0.3},
     'v5a.0.0':
         {'megadetector_version':'v5a.0.0',
-         'typical_detection_threshold':0.25,
-         'conservative_detection_threshold':0.1},
+         'typical_detection_threshold':0.2,
+         'conservative_detection_threshold':0.05},
     'v5b.0.0':
         {'megadetector_version':'v5b.0.0',
-         'typical_detection_threshold':0.25,
-         'conservative_detection_threshold':0.1}    
+         'typical_detection_threshold':0.2,
+         'conservative_detection_threshold':0.05}
 }
 
 DEFAULT_RENDERING_CONFIDENCE_THRESHOLD = DETECTOR_METADATA['v5b.0.0']['typical_detection_threshold']
-DEFAULT_OUTPUT_CONFIDENCE_THRESHOLD = 0.01  # to include in the output json file
+DEFAULT_OUTPUT_CONFIDENCE_THRESHOLD = 0.005
 
 DEFAULT_BOX_THICKNESS = 4
 DEFAULT_BOX_EXPANSION = 0
-
+    
 
 #%% Classes
 
@@ -156,6 +159,20 @@ class ImagePathUtils:
 
 #%% Utility functions
 
+def convert_to_tf_coords(array):
+    """From [x1, y1, width, height] to [y1, x1, y2, x2], where x1 is x_min, x2 is x_max
+
+    This is only used to keep the interface of the synchronous API.
+    """
+    x1 = array[0]
+    y1 = array[1]
+    width = array[2]
+    height = array[3]
+    x2 = x1 + width
+    y2 = y1 + height
+    return [y1, x1, y2, x2]
+
+
 def get_detector_metadata_from_version_string(detector_version):
     """
     Given a MegaDetector version string (e.g. "v4.1.0"), return the metadata for
@@ -163,7 +180,10 @@ def get_detector_metadata_from_version_string(detector_version):
     """
     if detector_version not in DETECTOR_METADATA:
         print('Warning: no metadata for unknown detector version {}'.format(detector_version))
-        return None
+        default_detector_metadata = {
+            'megadetector_version':'unknown'
+        }
+        return default_detector_metadata
     else:
         return DETECTOR_METADATA[detector_version]
 
@@ -203,6 +223,28 @@ def get_detector_version_from_filename(detector_filename):
     else:
         return known_model_versions[matches[0]]
     
+
+def get_typical_confidence_threshold_from_results(results):
+    """
+    Given the .json data loaded from a MD results file, determine a typical confidence
+    threshold based on the detector version.
+    """
+    if 'detector_metadata' in results['info'] and \
+        'typical_detection_threshold' in results['info']['detector_metadata']:
+        default_threshold = results['info']['detector_metadata']['typical_detection_threshold']
+    elif ('detector' not in results['info']) or (results['info']['detector'] is None):
+        print('Warning: detector version not available in results file, using MDv5 defaults')
+        detector_metadata = get_detector_metadata_from_version_string('v5a.0.0')
+        default_threshold = detector_metadata['typical_detection_threshold']
+    else:
+        print('Warning: detector metadata not available in results file, inferring from MD version')
+        detector_filename = results['info']['detector']
+        detector_version = get_detector_version_from_filename(detector_filename)
+        detector_metadata = get_detector_metadata_from_version_string(detector_version)
+        default_threshold = detector_metadata['typical_detection_threshold']
+
+    return default_threshold    
+
     
 def is_gpu_available(model_file):
     """Decide whether a GPU is available, importing PyTorch or TF depending on the extension
@@ -257,7 +299,7 @@ def load_detector(model_file, force_cpu=False):
 def load_and_run_detector(model_file, image_file_names, output_dir,
                           render_confidence_threshold=DEFAULT_RENDERING_CONFIDENCE_THRESHOLD,
                           crop_images=False, box_thickness=DEFAULT_BOX_THICKNESS, 
-                          box_expansion=DEFAULT_BOX_EXPANSION,
+                          box_expansion=DEFAULT_BOX_EXPANSION, image_size=None
                           ):
     """Load and run detector on target images, and visualize the results."""
     
@@ -370,9 +412,9 @@ def load_and_run_detector(model_file, image_file_names, output_dir,
 
                 # Image is modified in place
                 viz_utils.render_detection_bounding_boxes(result['detections'], image,
-                                                          label_map=DEFAULT_DETECTOR_LABEL_MAP,
-                                                          confidence_threshold=render_confidence_threshold,
-                                                          thickness=box_thickness, expansion=box_expansion)
+                            label_map=DEFAULT_DETECTOR_LABEL_MAP,
+                            confidence_threshold=render_confidence_threshold,
+                            thickness=box_thickness, expansion=box_expansion)
                 output_full_path = input_file_to_detection_file(im_file)
                 image.save(output_full_path)
 
@@ -427,6 +469,12 @@ def main():
     parser.add_argument(
         '--output_dir',
         help='Directory for output images (defaults to same as input)')
+    
+    parser.add_argument(
+        '--image_size',
+        type=int,
+        default=None,
+        help=('Force image resizing to a (square) integer size (not recommended to change this)'))
     
     parser.add_argument(
         '--threshold',
@@ -489,7 +537,8 @@ def main():
                           render_confidence_threshold=args.threshold,
                           box_thickness=args.box_thickness,
                           box_expansion=args.box_expansion,                          
-                          crop_images=args.crop)
+                          crop_images=args.crop,
+                          image_size=args.image_size)
 
 
 if __name__ == '__main__':

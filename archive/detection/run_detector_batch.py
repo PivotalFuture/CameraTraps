@@ -66,12 +66,12 @@ force_cpu = False
 if force_cpu:
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-from detection.run_detector import ImagePathUtils, is_gpu_available,\
+import detection.run_detector as run_detector
+from detection.run_detector import ImagePathUtils,\
+    is_gpu_available,\
     load_detector,\
     get_detector_version_from_filename,\
-    get_detector_metadata_from_version_string,\
-    FAILURE_INFER, FAILURE_IMAGE_OPEN,\
-    DEFAULT_OUTPUT_CONFIDENCE_THRESHOLD, DEFAULT_DETECTOR_LABEL_MAP
+    get_detector_metadata_from_version_string
 
 import visualization.visualization_utils as viz_utils
 
@@ -480,20 +480,8 @@ def write_results_to_file(results, output_file, relative_path_base=None,
             results_relative.append(r_relative)
         results = results_relative
 
-    info = { 
-        'detection_completion_time': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
-        'format_version': '1.2' 
-    }
-    
-    if detector_file is not None:
-        detector_filename = os.path.basename(detector_file)
-        detector_version = get_detector_version_from_filename(detector_filename)
-        detector_metadata = get_detector_metadata_from_version_string(detector_version)
-        info['detector'] = detector_filename  
-        info['detector_metadata'] = detector_metadata
-    else:
-        info['detector'] = 'unknown'
-        info['detector_metadata'] = 'unknown'
+    # The typical case: we need to build the 'info' struct
+    if info is None:
         
         info = { 
             'detection_completion_time': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),

@@ -23,7 +23,7 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import datetime
 import json
 import os
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import PIL.Image
@@ -258,7 +258,8 @@ def build_model(model_name: str, num_classes: int, pretrained: bool | str,
     return model
 
 
-def prep_device(model: torch.nn.Module) -> tuple[torch.nn.Module, torch.device]:
+def prep_device(model: torch.nn.Module, device_id: int | None = None
+                ) -> tuple[torch.nn.Module, torch.device]:
     """Place model on appropriate device.
 
     Args:
@@ -463,7 +464,7 @@ def main(dataset_dir: str,
 
 def log_run(split: str, epoch: int, writer: tensorboard.SummaryWriter,
             label_names: Sequence[str], metrics: MutableMapping[str, float],
-            heaps: Optional[Mapping[str, Mapping[int, list[HeapItem]]]],
+            heaps: Mapping[str, Mapping[int, list[HeapItem]]] | None,
             cm: np.ndarray) -> None:
     """Logs the outputs (metrics, confusion matrix, tp/fp/fn images) from a
     single epoch run to Tensorboard.
@@ -583,7 +584,7 @@ def track_extreme_examples(tp_heaps: dict[int, list[HeapItem]],
 
 
 def correct(outputs: torch.Tensor, labels: torch.Tensor,
-            weights: Optional[torch.Tensor] = None,
+            weights: torch.Tensor | None = None,
             top: Sequence[int] = (1,)) -> dict[int, float]:
     """
     Args:
@@ -620,7 +621,7 @@ def run_epoch(model: torch.nn.Module,
               k_extreme: int = 0
               ) -> tuple[
                   dict[str, float],
-                  Optional[dict[str, dict[int, list[HeapItem]]]],
+                  dict[str, dict[int, list[HeapItem]]] | None,
                   np.ndarray
               ]:
     """Runs for 1 epoch.

@@ -18,19 +18,13 @@ import uuid
 from collections import defaultdict
 from copy import deepcopy
 from random import sample
-from copy import deepcopy
 
+import numpy as np
 from tqdm import tqdm
 
-from data_management.megadb.schema import sequences_schema_check
+from ct_utils import truncate_float, write_json
 from data_management.cct_json_utils import IndexedJsonDb
-from ct_utils import truncate_float
-
-
-def write_json(path, content, indent=1):
-    with open(path, 'w') as f:
-        json.dump(content, f, indent=indent)
-
+from data_management.megadb.schema import sequences_schema_check
 
 # some property names have changed in the new schema
 old_to_new_prop_name_mapping = {
