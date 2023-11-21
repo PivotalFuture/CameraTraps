@@ -5,11 +5,7 @@ import torch.utils.model_zoo as model_zoo
 import torch
 import torch.nn.functional as F
 
-
-#%% Embedding architecture
-
 class EmbeddingNet(nn.Module):
-
     def __init__(self, architecture, feat_dim, use_pretrained=False):
         super(EmbeddingNet, self).__init__()
         self.feat_dim= feat_dim

@@ -11,25 +11,33 @@ from flask import Flask, request, jsonify
 
 import server_api_config as api_config
 from server_app_config import AppConfig
-from server_batch import BatchJobManager
-from server_job import create_batch_job
+from server_batch_job_manager import BatchJobManager
+from server_orchestration import create_batch_job, monitor_batch_job
 from server_job_status_table import JobStatusTable
 from server_utils import *
 
-#%% Helper classes
+# %% Flask app
+app = Flask(__name__)
+
+# reference: https://trstringer.com/logging-flask-gunicorn-the-manageable-way/
+if __name__ != '__main__':
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
+
+
+API_PREFIX = api_config.API_PREFIX
+app.logger.info('server, created Flask application...')
+
+# %% Helper classes
+
 app_config = AppConfig()
 job_status_table = JobStatusTable()
 batch_job_manager = BatchJobManager()
-print('server.py, finished instantiating helper classes')
+app.logger.info('server, finished instantiating helper classes')
 
 
-#%% Flask app and endpoints
-
-print('server.py, creating Flask application...')
-
-app = Flask(__name__)
-API_PREFIX = api_config.API_PREFIX
-
+# %% Flask endpoints
 
 @app.route(f'{API_PREFIX}/')
 def hello():
@@ -50,6 +58,8 @@ def request_detections():
         post_body = request.get_json()
     except Exception as e:
         return make_error(415, f'Error occurred reading POST request body: {e}.')
+
+    app.logger.info(f'server, request_detections, post_body: {post_body}')
 
     # required params
 
@@ -78,20 +88,16 @@ def request_detections():
         if result is not None:
             return make_error(result[0], result[1])
 
+    # can be an URL to a file not hosted in an Azure blob storage container
     images_requested_json_sas = post_body.get('images_requested_json_sas', None)
+
     if images_requested_json_sas is not None:
-        try:
-            exists = sas_blob_utils.check_blob_exists(images_requested_json_sas)
-        except Exception as e:
-            return make_error(400, 'images_requested_json_sas is not valid.')
-        if not exists:
-            return make_error(400, 'images_requested_json_sas points to a non-existent file.')
+        if not images_requested_json_sas.startswith(('http://', 'https://')):
+            return make_error(400, 'images_requested_json_sas needs to be an URL.')
 
     # if use_url, then images_requested_json_sas is required
-    if use_url:
-        if images_requested_json_sas is None:
-            msg = 'images_requested_json_sas is required since use_url is true.'
-            return make_error(400, msg)
+    if use_url and images_requested_json_sas is None:
+            return make_error(400, 'images_requested_json_sas is required since use_url is true.')
 
     # optional params
 
@@ -99,7 +105,7 @@ def request_detections():
     model_version = post_body.get('model_version', '')
     if model_version != '':
         model_version = str(model_version)  # in case user used an int
-        if model_version not in api_config.MD_VERSIONS_TO_REL_PATH:  # TODO check AppConfig
+        if model_version not in api_config.MD_VERSIONS_TO_REL_PATH:  # TODO use AppConfig to store model version info
             return make_error(400, f'model_version {model_version} is not supported.')
 
     # check request_name has only allowed characters
@@ -113,10 +119,18 @@ def request_detections():
                    'digits, - and _ are allowed).')
             return make_error(400, msg)
 
-    # optional params for telemetry collection
+    # optional params for telemetry collection - logged to status table for now as part of call_params
     country = post_body.get('country', None)
     organization_name = post_body.get('organization_name', None)
-    # TODO log this request to Insights
+
+    # All API instances / node pools share a quota on total number of active Jobs;
+    # we cannot accept new Job submissions if we are at the quota
+    try:
+        num_active_jobs = batch_job_manager.get_num_active_jobs()
+        if num_active_jobs >= api_config.MAX_BATCH_ACCOUNT_ACTIVE_JOBS:
+            return make_error(503, f'Too many active jobs, please try again later')
+    except Exception as e:
+        return make_error(500, f'Error checking number of active jobs: {e}')
 
     try:
         job_id = uuid.uuid4().hex
@@ -129,7 +143,11 @@ def request_detections():
         return make_error(500, f'Error creating a job status entry: {e}')
 
     try:
-        thread = Thread(target=create_batch_job, kwargs={'job_id': job_id, 'body': post_body})
+        thread = threading.Thread(
+            target=create_batch_job,
+            name=f'job_{job_id}',
+            kwargs={'job_id': job_id, 'body': post_body}
+        )
         thread.start()
     except Exception as e:
         return make_error(500, f'Error creating or starting the batch processing thread: {e}')
@@ -150,10 +168,12 @@ def cancel_request():
     except Exception as e:
         return make_error(415, f'Error occurred reading POST request body: {e}.')
 
+    app.logger.info(f'server, cancel_request received, body: {post_body}')
+
     # required fields
-    job_id = post_body.get('task_id', None)
+    job_id = post_body.get('request_id', None)
     if job_id is None:
-        return make_error(400, 'task_id is a required field.')
+        return make_error(400, 'request_id is a required field.')
 
     caller_id = post_body.get('caller', None)
     if caller_id is None or caller_id not in app_config.get_allowlist():
@@ -180,7 +200,7 @@ def cancel_request():
             'request_status': 'canceled',
             'message': 'Request has been canceled by the user.'
         })
-    return 200, 'Canceling signal has been sent. You can verify the status at the /task endpoint'
+    return 'Canceling signal has been sent. You can verify the status at the /task endpoint'
 
 
 @app.route(f'{API_PREFIX}/task/<job_id>')
@@ -189,10 +209,13 @@ def retrieve_job_status(job_id: str):
     Does not require the "caller" field to avoid checking the allowlist in App Configurations.
     Retains the /task endpoint name to be compatible with previous versions.
     """
+    # Fix for Zooniverse - deleting any "-" characters in the job_id
+    job_id = job_id.replace('-', '')
+
     item_read = job_status_table.read_job_status(job_id)  # just what the monitoring thread wrote to the DB
     if item_read is None:
         return make_error(404, 'Task is not found.')
-    if 'status' not in item_read or 'last_updated' not in item_read:
+    if 'status' not in item_read or 'last_updated' not in item_read or 'call_params' not in item_read:
         return make_error(404, 'Something went wrong. This task does not have a valid status.')
 
     # If the status is running, it could be a Job submitted before the last restart of this
@@ -233,8 +256,10 @@ def retrieve_job_status(job_id: str):
         app.logger.info(f'server, started a new thread to monitor job {job_id}')
 
     # conform to previous schemes
+    if 'num_tasks' in status:
+        del status['num_tasks']
     item_to_return = {
-        'Status': item_read['status'],
+        'Status': status,
         'Endpoint': f'{API_PREFIX}/request_detections',
         'TaskId': job_id,
         'Timestamp': item_read['last_updated']
@@ -250,3 +275,20 @@ def get_default_model_version() -> str:
 @app.route(f'{API_PREFIX}/supported_model_versions')
 def get_supported_model_versions() -> str:
     return jsonify(sorted(list(api_config.MD_VERSIONS_TO_REL_PATH.keys())))
+
+
+# %% undocumented endpoints
+
+def get_thread_names() -> list:
+    thread_names = []
+    for thread in threading.enumerate():
+        if thread.name.startswith('job_'):
+            thread_names.append(thread.name.split('_')[1])
+    return sorted(thread_names)
+
+
+@app.route(f'{API_PREFIX}/all_jobs')
+def get_all_jobs():
+    """List all Jobs being monitored since this API instance started"""
+    thread_names = get_thread_names()
+    return jsonify(thread_names)

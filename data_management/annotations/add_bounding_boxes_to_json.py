@@ -1,19 +1,23 @@
 #
 # add_bounding_boxes_to_json.py
 #
-# This script takes a image database in the COCO Camera Traps format and merges in a set of bounding box annotations
-# in the format that iMerit uses (a .json where actually only each row is a valid json).
+# This script takes a image database in the COCO Camera Traps format and merges in a set of bounding 
+# box annotations in the format that iMerit uses (a .json where actually only each row is a valid json).
 #
-# If you need to update an existing bbox database, please get all the original annotation files and re-generate
-# from scratch
+# If you need to update an existing bbox database, please get all the original annotation files and 
+# re-generate from scratch
 #
 
+#%% Imports
+
 import json
-import os
 import re
 from datetime import datetime, date
 
 from tqdm import tqdm
+
+from data_management.annotations import annotation_constants
+
 
 #%% Configurations and paths
 
@@ -106,7 +110,10 @@ if len(description) > 0:
 db_info['date_created'] = str(date.today())
 
 
-#%% Find the height and width of images from the annotation files if they are not available in the images DB
+#%% Find the height and width of images from the annotation files
+#
+# ...if they are not available in the images DB
+
 if not image_db_has_dims:
     height_width_from_anno = {}
     for i_batch, annotation_path in enumerate(annotation_paths):
@@ -140,7 +147,7 @@ def idfg_add_image_entry(file_name):
     all_images[file_name] = {
         'id': file_name,
         'file_name': file_name,
-        'location': location
+        'location': location  # TODO bug - location should be region_name + camera_location
     }
 
 original_rspb_db = json.load(open('/Users/siyuyang/Source/temp_data/CameraTrap/databases_2018/rspb/rspb_gola.json'))
@@ -162,13 +169,8 @@ def rspb_add_image_entry(image_id):
 
 #%% Create the bbox database from all annotation files pertaining to this dataset
 
-# the four categories for bounding boxes - do not change
-bbox_categories = [
-    {'id': 1, 'name': 'animal'},
-    {'id': 2, 'name': 'person'},
-    {'id': 3, 'name': 'group'},  # group of animals
-    {'id': 4, 'name': 'vehicle'}
-]
+bbox_categories = annotation_constants.bbox_categories
+
 # for the incoming annotations, look up by category name (common) and convert to the numerical id used in our databases
 bbox_cat_map = { x['name']: x['id'] for x in bbox_categories }
 

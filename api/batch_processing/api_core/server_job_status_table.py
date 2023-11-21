@@ -6,6 +6,8 @@ A class to manage updating the status of an API request / Azure Batch Job using
 the Cosmos DB table "batch_api_jobs".
 """
 
+import logging
+import os
 import unittest
 import uuid
 from typing import Union, Optional
@@ -15,6 +17,9 @@ from azure.cosmos.exceptions import CosmosResourceNotFoundError
 
 from server_api_config import API_INSTANCE_NAME, COSMOS_ENDPOINT, COSMOS_WRITE_KEY
 from server_utils import get_utc_time
+
+
+log = logging.getLogger(os.environ['FLASK_APP'])
 
 
 class JobStatusTable:
@@ -46,11 +51,13 @@ class JobStatusTable:
         assert status['request_status'] in JobStatusTable.allowed_statuses
 
         # job_id should be unique across all instances, and is also the partition key
+        cur_time = get_utc_time()
         item = {
             'id': job_id,
             'api_instance': self.api_instance,
             'status': status,
-            'last_updated': get_utc_time(),
+            'job_submission_time': cur_time,
+            'last_updated': cur_time,
             'call_params': call_params
         }
         created_item = self.db_jobs_client.create_item(item)
@@ -93,10 +100,11 @@ class JobStatusTable:
         """
         try:
             read_item = self.db_jobs_client.read_item(job_id, partition_key=job_id)
+            assert read_item['api_instance'] == self.api_instance, 'Job does not belong to this API instance'
         except CosmosResourceNotFoundError:
             return None  # job_id not a key
         except Exception as e:
-            print(f'server_job_status_table, read_job_status, exception: {e}')
+            logging.error(f'server_job_status_table, read_job_status, exception: {e}')
             raise
         else:
             item = {k: v for k, v in read_item.items() if not k.startswith('_')}

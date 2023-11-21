@@ -1,3 +1,10 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+"""
+A module to hold the configurations specific to an instance of the API.
+"""
+
 import os
 
 
@@ -5,7 +12,7 @@ import os
 # you likely need to modify these when deploying a new instance of the API
 
 API_INSTANCE_NAME = 'cm'  # 'internal', 'cm', 'camelot', 'zooniverse'
-POOL_ID = 'cm_0'  # name of the Batch pool created for this API instance
+POOL_ID = 'cm_1'  # name of the Batch pool created for this API instance
 
 MAX_NUMBER_IMAGES_ACCEPTED_PER_JOB = 4 * 1000 * 1000  # inclusive
 
@@ -22,7 +29,7 @@ MONITOR_PERIOD_MINUTES = 10
 # if this number of times the thread wakes up to check is exceeded, stop the monitoring thread
 MAX_MONITOR_CYCLES = 4 * 7 * int((60 * 24) / MONITOR_PERIOD_MINUTES)  # 4 weeks
 
-IMAGE_SUFFIXES_ACCEPTED = ('.jpg', '.png')  # case-insensitive
+IMAGE_SUFFIXES_ACCEPTED = ('.jpg', '.jpeg', '.png')  # case-insensitive
 assert isinstance(IMAGE_SUFFIXES_ACCEPTED, tuple)
 
 OUTPUT_FORMAT_VERSION = '1.1'
@@ -30,6 +37,10 @@ OUTPUT_FORMAT_VERSION = '1.1'
 NUM_IMAGES_PER_TASK = 2000
 
 OUTPUT_SAS_EXPIRATION_DAYS = 180
+
+# quota of active Jobs in our Batch account, which all node pools i.e. API instances share;
+# cannot accept job submissions if there are this many active Jobs already
+MAX_BATCH_ACCOUNT_ACTIVE_JOBS = 300
 
 
 #%% MegaDetector info
@@ -45,7 +56,7 @@ MD_VERSIONS_TO_REL_PATH = {
 DEFAULT_MD_VERSION = '4.1'
 assert DEFAULT_MD_VERSION in MD_VERSIONS_TO_REL_PATH
 
-# copied from TFDetector class in detection/run_tf_detector.py
+# copied from TFDetector class in detection/run_detector.py
 DETECTOR_LABEL_MAP = {
     '1': 'animal',
     '2': 'person',

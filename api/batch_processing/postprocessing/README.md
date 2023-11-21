@@ -1,7 +1,10 @@
-# Postprocessing scripts
+# Postprocessing tools
 
 
-This folder collects scripts to further process the output JSON file of the batch processing API.
+For documentation on using the Output Manager app to split the batch processing API's output file into more manageable bites, see [here](./CameraTrapJsonManagerApp.md). 
+
+
+The rest of thisi folder collects scripts to further process the output JSON file of the batch processing API.
 
 -  `load_api_results.py` loads the output file into a Pandas dataframe and have functions to group entries by `seq_id` if ground truth JSON is provided as an instance of `IndexedJsonDb` (`data_management/cct_json_utils.py`) from a CCT format file. 
 
@@ -10,9 +13,6 @@ This folder collects scripts to further process the output JSON file of the batc
 - `convert_output_format.py`: no longer used because the CSV output format is deprecated.
 
 - `combine_api_outputs.py` merges two or more output JSON files into one. This is useful if a big batch had to be submitted in smaller batches, or if errored images were processed again successfully. 
-
-
-Siyu: When would `combine_api_shard_files()` be useful? How does it compare with `api_core_support/aggregate_results_manually.py`?
 
 - `separate_detections_into_folders.py` copies image files on your computer into animal/person/vehicle/empty/multiple folders according to confidence thresholds you specify for each category.
 

@@ -3,35 +3,38 @@ copy_and_unzip_emammal.py
 
 Siyu Yang
 
-Script to copy all deployments in the emammal container (mounted on the VM or not) to data disk at /datadrive
-and unzip them, deleting the copied zip file.
-
-Confirmed that the '0Bill McShea' and '0Roland Kays' collections of zip filenames are disjoint.
+Script to copy all deployments in the emammal container (mounted on the VM or not) to data
+disk at /datadrive and unzip them, deleting the copied zip file.
 
 Need to add exception handling.
 '''
 
+#%% Imports and constants
 
+from datetime import datetime
 import itertools
 import json
 import multiprocessing
-import os
-import zipfile
-from datetime import datetime
 from multiprocessing.dummy import Pool as ThreadPool  # this functions like threading
+import os
 from shutil import copy, copyfile
 from tqdm import tqdm
-from azure.storage.blob import BlockBlobService
+from typing import Optional
+import zipfile
+
+from azure.storage.blob import BlobServiceClient
 
 
 # configurations and paths
-log_folder = '/home/yasiyu/yasiyu_log'
-dest_folder = '/datadrive/emammal'  # data disk attached where data is stored
+log_folder = '/home/lynx/logs'
+dest_folder = '/datadrive/emammal_robertlong'  # data disk attached where data is stored
 origin = 'cloud'  # 'cloud' or 'mounted'
 
 
+#%% Helper functions
 
 def _copy_unzip(source_path, dest_folder):
+    
     try:
         dest_subfolder = os.path.join(dest_folder, os.path.basename(source_path).split('.zip')[0])
         if os.path.exists(dest_subfolder):
@@ -50,7 +53,7 @@ def _copy_unzip(source_path, dest_folder):
         print('{} copied and extracted'.format(dest_subfolder))
         return None
 
-    except Exception as e:
+    except Exception:
         try:
             print('Retrying...')
             dest_path = os.path.join(dest_folder, os.path.basename(source_path))
@@ -66,9 +69,8 @@ def _copy_unzip(source_path, dest_folder):
 
 
 def copy_from_mounted_container(source_folder, dest_folder):
+    
     sources = []
-
-
 
     collections = sorted(os.listdir(source_folder))
 
@@ -102,10 +104,15 @@ def copy_from_mounted_container(source_folder, dest_folder):
         json.dump(results, f)
 
 
-def _download_unzip(blob_service, blob_path, dest_path):
+def _download_unzip(blob_service: BlobServiceClient,
+                    container: str,
+                    blob_path: str,
+                    dest_path: str) -> Optional[str]:
     try:
-        print('Downloading...')
-        blob_service.get_blob_to_path(container, blob_path, dest_path)
+        with open(dest_path, 'wb') as f:
+            cc = blob_service.get_container_client(container)
+            print('Downloading...')
+            cc.download_blob(blob_path).readinto(f)
 
         dest_subfolder = dest_path.split('.zip')[0]
 
@@ -121,15 +128,23 @@ def _download_unzip(blob_service, blob_path, dest_path):
         return blob_path
 
 
-def download_from_container(dest_folder, blob_service, container='emammal', desired_blob_prefix=''):
-    generator = blob_service.list_blobs(container)
-    desired_blobs = [blob.name for blob in generator if blob.name.startswith(desired_blob_prefix)]
+def download_from_container(dest_folder: str,
+                            blob_service: BlobServiceClient,
+                            container: str = 'emammal',
+                            desired_blob_prefix: str = '') -> None:
+    generator = blob_service.get_containre_client(container).list_blobs()
+    desired_blobs = [blob.name for blob in generator
+                     if blob.name.startswith(desired_blob_prefix)]
+
+    print('desired_blobs', desired_blobs)
 
     results = []
     for blob_path in tqdm(desired_blobs):
-        blob_name = blob_path.split('/')[1]
+        blob_name = blob_path.split('/')[2]
+        print('blob_name', blob_name)
         dest_path = os.path.join(dest_folder, blob_name)
-        result = _download_unzip(blob_service, blob_path, dest_path)
+        print('dest_path', dest_path)
+        result = _download_unzip(blob_service, container, blob_path, dest_path)
         results.append(result)
 
     cur_time = datetime.now().strftime('%Y%m%d-%H%M%S')
@@ -137,10 +152,12 @@ def download_from_container(dest_folder, blob_service, container='emammal', desi
         json.dump(results, f)
 
 
+#%% Command-line driver
+        
 if __name__ == '__main__':
     if origin == 'cloud':
-        container = 'emammal'
-        desired_blob_prefix = '0Robert Long/'
+        container = 'wpz'
+        desired_blob_prefix = 'emammal/0Robert Long/'
 
     print('Start timing...')
     start_time = datetime.now()
@@ -152,9 +169,10 @@ if __name__ == '__main__':
 
     elif origin == 'cloud':
         # or you can download them using the storage Python SDK
-        # key to the storage account should be stored in the environment variable AZ_STORAGE_KEY
-        key = os.environ["AZ_STORAGE_KEY"]
-        blob_service = BlockBlobService(account_name='wildlifeblobssc', account_key=key)
+        # store storage account key in environment variable AZ_STORAGE_KEY
+        blob_service = BlobServiceClient(
+            account_url='wildlifeblobssc.blob.core.windows.net',
+            credential=os.environ["AZ_STORAGE_KEY"])
         download_from_container(dest_folder, blob_service, container=container,
                                 desired_blob_prefix=desired_blob_prefix)
 

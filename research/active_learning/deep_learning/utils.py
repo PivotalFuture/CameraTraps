@@ -1,10 +1,5 @@
-#
-# utils.py
-#
-
-#%% Constants and imports
-
 import numpy as np
+import sys
 import matplotlib.pyplot as plt
 from PIL import Image as PILImage
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
@@ -19,7 +14,7 @@ from .losses import *
 indexcolors =["#000000", "#FFFF00", "#1CE6FF", "#FF34FF", "#FF4A46", "#008941", "#006FA6", "#A30059",
 
         "#FFDBE5", "#7A4900", "#0000A6", "#63FFAC", "#B79762", "#004D43", "#8FB0FF", "#997D87",
-        "#5A0007", "#809693", "#FEFFE6", "#1B4400", "#4FC601", "#3B5DFF", "#4A3B53", "#FF2F80",
+        "#5A0007", "#809693", "#E704C4", "#1B4400", "#4FC601", "#3B5DFF", "#4A3B53", "#FF2F80",
         "#61615A", "#BA0900", "#6B7900", "#00C2A0", "#FFAA92", "#FF90C9", "#B903AA", "#D16100",
         "#DDEFFF", "#000035", "#7B4F4B", "#A1C299", "#300018", "#0AA6D8", "#013349", "#00846F",
         "#372101", "#FFB500", "#C2FFED", "#A079BF", "#CC0744", "#C0B9B2", "#C2FF99", "#001E09",
@@ -38,7 +33,7 @@ indexcolors =["#000000", "#FFFF00", "#1CE6FF", "#FF34FF", "#FF4A46", "#008941", 
         "#7A7BFF", "#D68E01", "#353339", "#78AFA1", "#FEB2C6", "#75797C", "#837393", "#943A4D",
         "#B5F4FF", "#D2DCD5", "#9556BD", "#6A714A", "#001325", "#02525F", "#0AA3F7", "#E98176",
         "#DBD5DD", "#5EBCD1", "#3D4F44", "#7E6405", "#02684E", "#962B75", "#8D8546", "#9695C5",
-        "#E773CE", "#D86A78", "#3E89BE", "#CA834E", "#518A87", "#5B113C", "#55813B", "#E704C4",
+        "#E773CE", "#D86A78", "#3E89BE", "#CA834E", "#518A87", "#5B113C", "#55813B", "#FEFFE6",
         "#00005F", "#A97399", "#4B8160", "#59738A", "#FF5DA7", "#F7C9BF", "#643127", "#513A01",
         "#6B94AA", "#51A058", "#A45B02", "#1D1702", "#E20027", "#E7AB63", "#4C6001", "#9C6966",
         "#64547B", "#97979E", "#006A66", "#391406", "#F4D749", "#0045D2", "#006C31", "#DDB6D0",
@@ -56,9 +51,6 @@ indexcolors =["#000000", "#FFFF00", "#1CE6FF", "#FF34FF", "#FF4A46", "#008941", 
         "#2F5D9B", "#6C5E46", "#D25B88", "#5B656C", "#00B57F", "#545C46", "#866097", "#365D25",
         "#252F99", "#00CCFF", "#674E60", "#FC009C", "#92896B"]
 
-
-#%% Utility functions
-        
 def reduce_dimensionality(X):
   print("Calculating TSNE")
   embedding= TSNE(n_jobs=20, n_components=2).fit_transform(X)
@@ -70,8 +62,8 @@ def save_embedding_plot(name, embedd, labels, info):
   colors= [indexcolors[int(i)] for i in labels.squeeze()]
   embedding= reduce_dimensionality(embedd)
   plt.scatter(embedding[:,0],embedding[:,1], s=1, c= colors)
-  legend_texts = [ x[0] for x in sorted(info.items(), key=lambda kv: kv[1])]
-  patches = []
+  legend_texts= [ x[0] for x in sorted(info.items(), key=lambda kv: kv[1])]
+  patches=[]
   for i,label in enumerate(legend_texts):
     patches.append(mpatches.Patch(color=indexcolors[i], label=label))
   plt.legend(handles=patches)
@@ -81,16 +73,13 @@ def save_embedding_plot(name, embedd, labels, info):
   plt.savefig(name)
   plt.close(fig)
 
-
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
     torch.save(state, filename)
     if is_best:
         shutil.copyfile(filename, 'model_best.pth.tar')
 
-
 def load_checkpoint(filename='model_best.pth.tar'):
     return torch.load(filename, map_location=torch.device('cpu'))
-
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
@@ -125,7 +114,6 @@ def accuracy(output, target, topk=(1,)):
             res.append(correct_k.mul_(100.0 / batch_size))
         return res
 
-
 def pdist(vectors):
     distance_matrix = -2 * vectors.mm(torch.t(vectors)) + vectors.pow(2).sum(dim=1).view(1, -1) + vectors.pow(2).sum(
         dim=1).view(-1, 1)
@@ -152,9 +140,8 @@ def getCriterion(loss_type, strategy, margin):
 
 class PairSelector:
     """
-    Implementation should return indices of positive pairs and negative pairs that will be 
-    passed to compute contrastive Loss
-    
+    Implementation should return indices of positive pairs and negative pairs that will be passed to compute
+    Contrastive Loss
     return positive_pairs, negative_pairs
     """
 
@@ -168,10 +155,8 @@ class PairSelector:
 class AllPositivePairSelector(PairSelector):
     """
     Discards embeddings and generates all possible pairs given labels.
-    If balance is True, negative pairs are a random sample to match the number of positive 
-    samples
+    If balance is True, negative pairs are a random sample to match the number of positive samples
     """
-    
     def __init__(self, balance=True):
         super(AllPositivePairSelector, self).__init__()
         self.balance = balance
@@ -208,7 +193,6 @@ class HardNegativePairSelector(PairSelector):
         all_pairs = torch.LongTensor(all_pairs)
         positive_pairs = all_pairs[(labels[all_pairs[:, 0]] == labels[all_pairs[:, 1]]).nonzero()]
         negative_pairs = all_pairs[(labels[all_pairs[:, 0]] != labels[all_pairs[:, 1]]).nonzero()]
-
         negative_distances = distance_matrix[negative_pairs[:, 0], negative_pairs[:, 1]]
         negative_distances = negative_distances.cpu().data.numpy()
         top_negatives = np.argpartition(negative_distances, len(positive_pairs))[:len(positive_pairs)]

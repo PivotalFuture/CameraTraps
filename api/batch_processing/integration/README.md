@@ -1,8 +1,8 @@
 ## MegaDetector batch processing workflow integration
 
-This folder contains information about ways to use MegaDetector output files in various workflows.  Specifically:
+This folder contains information about ways to use MegaDetector output files in various workflows.  Specifically...
 
-* [Timelapse2](http://saul.cpsc.ucalgary.ca/timelapse/) can read the results produced by the [MegaDetector batch processing API](https://github.com/microsoft/CameraTraps/tree/master/api/batch_processing) and/or [run_tf_detector_batch.py](https://github.com/microsoft/CameraTraps/blob/master/detection/run_tf_detector_batch.py), as well as the species classification results produced by our [classification pipeline](https://github.com/microsoft/CameraTraps/tree/master/classification).  For information about how to use this feature, see [timelapse.md](timelapse.md), but mostly see the section in the Timelapse manual called "Automatic Image Recognition".  If you're a Timelapse user, you may also want to check out our [guide to configuring Azure virtual machines](remote_desktop.md) to run Timelapse in the cloud, which can make it easier to split annotation workloads across your team.
+### Timelapse2
 
 [Timelapse2](http://saul.cpsc.ucalgary.ca/timelapse/) can read the results produced by the [MegaDetector batch processing API](https://github.com/ecologize/CameraTraps/tree/master/api/batch_processing) and/or [run_tf_detector_batch.py](https://github.com/ecologize/CameraTraps/blob/master/detection/run_tf_detector_batch.py), as well as the species classification results produced by our [classification pipeline](https://github.com/ecologize/CameraTraps/tree/master/classification).  For information about how to use this feature, see [timelapse.md](timelapse.md), but mostly see the section in the Timelapse manual called "Automatic Image Recognition".  If you're a Timelapse user, you may also want to check out our [guide to configuring Azure virtual machines](remote_desktop.md) to run Timelapse in the cloud, which can make it easier to split annotation workloads across your team.
 

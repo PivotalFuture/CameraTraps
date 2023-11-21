@@ -1,11 +1,18 @@
-# To start a new detection project:
+# Announcement
+
+At the core of our mission is the desire to create a harmonious space where conservation scientists from all over the globe can unite, share, and grow. We are expanding the CameraTraps repo to introduce PyTorch Wildlife, a Collaborative Deep Learning Framework for Conservation, where researchers can come together to share and use datasets and deep learning architectures for wildlife conservation.
+
+We've been inspired by the potential and capabilities of Megadetector, and we deeply value its contributions to the community. **As we forge ahead with PyTorch Wildlife, please know that we remain committed to supporting and maintaining Megadetector, ensuring its continued relevance and utility**. You can access our current version of PyTorch Wildlife [here!](https://github.com/microsoft/CameraTraps/tree/PytorchWildlife_Dev).
+
+# Overview
 
 This folder contains scripts and configuration files for training and evaluating [MegaDetector](https://github.com/ecologize/CameraTraps/blob/main/megadetector.md).  If you are looking to <b>use</b> MegaDetector, you probably don't want to start with this page; instead, start with the [MegaDetector page](https://github.com/ecologize/CameraTraps/blob/main/megadetector.md).  If you are looking to fine-tune MegaDetector on new data, you also don't want to start with this page; instead, start with the [YOLOv5 training guide](https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data).
 
-## Follow installation instructions
+# Format notes
 
-TFODAPI works best in python 2.7.  tfrecords files require python 2.7.  
-TFODAPI requires Tensorflow >= 1.9.0
+Bounding boxes predicted by MegaDetector are in normalized coordinates, as `[ymin, xmin, ymax, xmax]`, with the origin in the upper-left of the image. This is different from 
+- the COCO Camera Trap format, which uses absolute coordinates in `[xmin, ymin, width_of_box, height_of_box]` (see [data_management](../data_management/README.md))
+- the batch processing API's output and entries in the MegaDB, which use normalized coordinates in `[xmin, ymin, width_of_box, height_of_box]` (see [batch_processing](../api/batch_processing#detector-outputs))
 
 # Contents of this folder
 
@@ -31,95 +38,80 @@ To get labels for training  MegaDetector, use the query `query_bbox`. Note that 
 
 Running this query will take about 10+ minutes; this is a relatively small query so no need to increase the throughput of the database. The output is a JSON file containing a list, where each entry is the label for an image:
  
-If you are having protobuf errors, install protocol buffers from binary as described [here](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/installation.md)
-
-## Create tfrecords
-Use code in tfrecords to create tfrecord files for your data
-
-* `make_tfrecords_from_json.py` demonstrates how to use the provided functions to create one set of tfrecord files from a single .json file
-* if you want to run oneclass detection, first convert yor json to oneclass using `database_tools/make_oneclass_json.py` 
-* If you run into issues with corrupted .jpg files, you can use `database_tools/remove_corrupted_images_from_database.py` to create a copy of your database without the images that tensorflow cannot read 
-
-## Set up experiment directory
-* Create experiment directory
-  * Within experiment directory create `configs` folder
-  * Example can be seen in the ai4e fileshare at `sample_object_detection_experiment_directory/`
-* Decide on architecture
-  * Our example uses Faster-RCNN with Inception Resvet V2 backbone and Atrous Convolutions 
-* Download appropriate pretrained model from [tensorflow model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md)
-  * Our example pretrained model is at `models/object_detection/faster_rcnn_inception_resnet_v2_atrous/faster_rcnn_inception_resnet_v2_atrous_coco_2018_01_28`
-  * You can also start training from a pretrained tensorflow classification model
-    * We have an example of this in the fileshare at `models/object_detection/faster_rcnn_inception_resnet_v2_atrous/train_on_ss_with_ss_pretrained_backbone/`
-    * Note that to start from a classification backbone, you must add "from_detection_checkpoint: false" to train_config{} in your config file
-    * To train a classification backbone, we recommend using [this visipedia classification code base](https://github.com/visipedia/tf_classification)
-* Copy tf sample config (typically pipeline.config) for that architecture to your configs folder as a starting point (find samples in `tfmodels/research/object_detection/samples/configs/`)
-  * Point within config file to the locations of your training tfrecords, eval tfrecords, pretrained model
-  * Make any other config changes you want for this experiment (learning rate, data augmentation, etc.) using the params described in [preprocessor.proto](https://github.com/tensorflow/models/blob/master/research/object_detection/protos/preprocessor.proto) 
-  * Our example can be seen in `sample_object_detection_experiment_directory/configs/pipeline.config`
-  
-## Run training
-
-You can use the bash script `pipeline/run_training.sh`
-
-Alternatively, you can run everything from the command line.
-
-Example call:
-```
-python  tfmodels/research/object_detection/model_main.py \
---pipeline_config_path=/ai4efs/sample_object_detection_experiment_directory/configs/pipeline.config \
---model_dir=/ai4efs/sample_object_detection_experiment_directory/ \
---num_train_steps=200000 \
---num_eval_steps=1725 \
---alsologtostderr
-
+```json
+{
+ "bbox": [
+  {
+   "category": "person",
+   "bbox": [
+    0.3023,
+    0.487,
+    0.5894,
+    0.4792
+   ]
+  }
+ ],
+ "file": "Day/1/IMAG0773 (4).JPG",
+ "dataset": "dataset_name",
+ "location": "location_designation"
+}
 ```
 
-## Watch training on tensorboard
-Make sure you have port `6006` open on your VM
+### Assign each image a `download_id`
 
-Example call:
+To avoid creating nested directories for downloaded images, we give each image a `download_id` to use as the file name to save the image at.
+
+In any script or notebook, give each entry a unique ID (`<dataset>.seq<seq_id>.frame<frame_num>`).
+
+If you are preparing data to add to an existing, already downloaded collection, add a field `new_entry` to the entry.
+
+Save this version of the JSON list:
+
+```json
+{
+ "bbox": [
+  {
+   "category": "person",
+   "bbox": [
+    0.3023,
+    0.487,
+    0.5894,
+    0.4792
+   ]
+  }
+ ],
+ "file": "Day/1/IMAG0773 (4).JPG",
+ "dataset": "dataset_name",
+ "location": "location_designation",
+ "download_id": "tnc_islands.seqab350628-ff22-2a29-8efa-boa24db24b57.frame0",
+ "new_entry": true
+}
 ```
-tensorboard --logdir /ai4efs/sample_object_detection_experiment_directory/ --port 6006
+
+### Download the images
+
+Use `data_management/megadb/download_images.py` to download the new images, probably to an attached disk. Use the flag `--only_new_images` if in the above step you added the `new_entry` field to images that still need to be downloaded. 
+
+
+### Split the images into train/val/test set
+
+Use `data_management/megadb/split_images.py` to move the images to new folders `train`, `val`, and `test`. It will look up the splits in the Splits table in MegaDB, and any entries that do not have a location field will be placed in the training set.
+
+
+## Training with YOLOv5
+
+This section documents the environment in which MegaDetector v5 was trained; for more information about these parameters, see the [YOLOv5 training guide](https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data).
+
+With image size 1280px, starting with pre-trained weights (automatically downloaded from latest release) of the largest model (yolov5x6.pt). Saving checkpoint every epoch. Example:
+
 ```
+export WANDB_CACHE_DIR=/camtraps/wandb_cache
 
-## Export best model
+docker pull nvidia/cuda:11.4.2-runtime-ubuntu20.04
 
-Use `pipeline/run_export_model.sh`
+(or yasiyu.azurecr.io/yolov5_training with the YOLOv5 repo dependencies installed)
 
-Alternatively...
+docker run --gpus all --ipc=host --ulimit memlock=-1 --ulimit stack=67108864 -d -it -v /marmot_disk_0/camtraps:/camtraps nvcr.io/nvidia/pytorch:21.10-py3 /bin/bash 
 
-Example call:
+torchrun --standalone --nnodes=1 --nproc_per_node 2 train.py --project megadetectorv5 --name camonly_mosaic_xlarge_dist_5 --noval --save-period 1 --device 0,1 --batch 8 --imgsz 1280 --epochs 10 --weights yolov5x6.pt --data /home/ilipika/camtraps/pycharm/detection/detector_training/experiments/megadetector_v5_yolo/data_camtrap_images_only.yml --hyp /home/ilipika/camtraps/pycharm/detection/detector_training/experiments/megadetector_v5_yolo/hyp_mosaic.yml
 ```
-python tfmodels/research/object_detection/export_inference_graph.py \
-    --input_type=image_tensor \
-    --pipeline_config_path=/ai4efs/sample_object_detection_experiment_directory/configs/pipeline.config \
-    --trained_checkpoint_prefix=/ai4efs/sample_object_detection_experiment_directory/model.ckpt-[XXXXXX] \
-    --output_directory=/ai4efs/models/object_detection/faster_rcnn_inception_resnet_v2_atrous/megadetector_sample/
-
-```
-## Run inference on test sets
-
-Use `pipeline/run_inference_all.sh` to extract bboxes for all test sets to python dicts, or use the individual bash scripts for individual test sets
-
-Alternatively...
-
-Example call:
-```
-mkdir /ai4efs/models/object_detection/faster_rcnn_inception_resnet_v2_atrous/megadetector_sample/predictions/
-
-TF_RECORD_FILES=$(ls /ai4efs/tfrecords/caltechcameratraps/oneclass/eccv_18/train-?????-of-????? | tr '\n' ',')
-
-python tfmodels/research/object_detection/inference/infer_detections.py \
---input_tfrecord_paths=$TF_RECORD_FILES \
---output_tfrecord_path=/ai4efs/models/object_detection/faster_rcnn_inception_resnet_v2_atrous/megadetector_sample/predictions/ss_test_detections_imerit_batch_3.tfrecord-00000-of-00001 \
---inference_graph=/ai4efs/models/object_detection/faster_rcnn_inception_resnet_v2_atrous/megadetector_sample/frozen_inference_graph.pb \
---discard_image_pixels
-```
-Then you can use `tfrecords/read_from_tfrecords.py` to read detection results from inference tfrecords into python dicts
-
-
-# Evaluation
-`detection_eval` contains code for evaluating models, based on the python dicts returned from `tfrecords/read_from_tfrecords` and/or the bash scripts for inference.
-
-Evaluation scripts provided include evaluating at object, image, and sequence levels, evaluating detection models as classifiers (which allows you to evaluate on data that has only class-level annotations), evaluating models per-camera-location, and evaluating models per-species
-

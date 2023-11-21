@@ -47,7 +47,7 @@ The API endpoints are in a Flask web application, which needs to be run in the c
 
 In addition, the API uses the `sas_blob_utils` module from the `ai4eutils` [repo](https://github.com/microsoft/ai4eutils), so that repo folder should be on the PYTHONPATH. 
 
-Make sure to update the `API_INSTANCE_NAME` and `POOL_ID` values in [server_api_config.py](./server_api_config.py) to reflect which instance of the API is being deployed.
+Make sure to update the `API_INSTANCE_NAME`, `POOL_ID`, `BATCH_ACCOUNT_NAME`, and `BATCH_ACCOUNT_URL` values in [server_api_config.py](./server_api_config.py) to reflect which instance of the API is being deployed.
 
 To start the Flask app in development mode, first source `start_batch_api.sh` to retrieve secrets required for the various Azure services from KeyVault and export them as environment variables in the current shell:
 ```commandline
@@ -59,12 +59,12 @@ You will be prompted to authenticate via AAD (you need to have access to the AI4
 Set the logs directory as needed, and the name of the Flask app:
 ```
 export LOGS_DIR=/home/otter/camtrap/batch_api_logs
-
 export FLASK_APP=server
 ```
 
 To start the app locally in debug mode:
 ```commandline
+export FLASK_ENV=development
 flask run -p 5000 --eager-loading --no-reload
 ```
 
@@ -75,7 +75,7 @@ flask run -h 0.0.0.0 -p 6011 --eager-loading --no-reload |& tee -a $LOGS_DIR/log
 
 To start the app using the production server:
 ```commandline
-gunicorn -w 1 -b 0.0.0.0:6011 --threads 4 --access-logfile $LOGS_DIR/log_internal_dev_20210218_access.txt --log-file $LOGS_DIR/log_internal_dev_20210218_error.txt --capture-output server:app
+gunicorn -w 1 -b 0.0.0.0:6011 --threads 4 --access-logfile $LOGS_DIR/log_internal_dev_20210218_access.txt --log-file $LOGS_DIR/log_internal_dev_20210218_error.txt --capture-output server:app --log-level=info
 ```
 The logs will only be written to these two log files and will not show in the console.
 
