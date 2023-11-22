@@ -4,10 +4,10 @@ setup(
     name='PytorchWildlife',
     version='0.0.1.1.2', 
     packages=find_packages(),
-    url='https://github.com/microsoft/CameraTraps/tree/PytorchWildlife_Dev',  # Replace with the actual GitHub URL
+    url='https://github.com/microsoft/CameraTraps/tree/PytorchWildlife_Dev',  
     license='MIT',
     author='Andres Hernandez, Zhongqi Miao',
-    author_email='v-andreshern@microsoft,com, zhongqimiao@microsoft.com',  
+    author_email='v-andreshern@microsoft.com, zhongqimiao@microsoft.com',  
     description='a PyTorch Collaborative Deep Learning Framework for Conservation.',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',

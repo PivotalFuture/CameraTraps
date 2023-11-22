@@ -17,23 +17,6 @@ Yolov5
    :undoc-members:
    :show-inheritance:
 
-Yolov8
-^^^^^^
-
-.. autoclass:: YOLOV8Base
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-HerdNet
-^^^^^^
-
-.. autoclass:: HerdNet
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
 .. _Classification:
 
 Classification models
