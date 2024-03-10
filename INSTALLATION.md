@@ -67,7 +67,9 @@ The `demo_gradio.py` will launch a Gradio interface where you can:
 - Perform Batch Image Detection: Upload a zip file containing multiple images to get detections in a JSON format.
 - Perform Video Detection: Upload a video and get a processed video with detected animals. *The package installed via pip might encounter video loading issues with browsers for this task (i.e., processed videos don't show in the webapp), as the opencv installed through pip lacks a browser-supported codec. This issue will be resolved once we have a conda package available.*
 
-<img src="images/gradio_UI.png">
+<img src="assets/gradio_UI.png">
+
+**NOTE: Windows may encounter some errors with large file uploads making Batch Image Detection and Video Detection unable to process. It is a Gradio issue. Newer versions of Gradio in the future may fix this problem.**
   
 ## License
 This project is licensed under the MIT License. Refer to the LICENSE file for more details.
