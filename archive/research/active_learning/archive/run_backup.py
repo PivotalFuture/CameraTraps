@@ -18,7 +18,6 @@ import numpy as np
 import matplotlib
 from scipy import stats
 from itertools import count
-#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN, MiniBatchKMeans
 from sklearn.neighbors import KNeighborsClassifier
@@ -49,7 +48,7 @@ from sklearn.metrics import pairwise_distances_argmin_min
 from torch.utils.data import TensorDataset, DataLoader
 import torch.nn as nn
 import torch.optim as optim
-import torch 
+import torch
 
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
@@ -103,7 +102,7 @@ def apply_different_methods(X_train, y_train, X_test, y_test):
 
     criterion = nn.CrossEntropyLoss()
     net= ClassificationNet(256,48)
-    optimizer = optim.Adam(net.parameters()) 
+    optimizer = optim.Adam(net.parameters())
     net.train()
     #conf= ConfusionMatrix(24)
     for epoch in range(50):  # loop over the dataset multiple times
@@ -148,14 +147,14 @@ def apply_different_methods(X_train, y_train, X_test, y_test):
           top5.update(acc5[0], inputs.size(0))
     print('loss: %.3f Top-1: %.3f Top-5: %.3f' % (losses.avg,top1.avg,top5.avg))
 
-    
+
 
 print('Finished Training')
 
 """def completeClassificationLoop(dataset,model, num_classes):
     clf= ClassificationNet(model,num_classes).cuda()
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(clf.parameters(), lr=0.0001) 
+    optimizer = optim.Adam(clf.parameters(), lr=0.0001)
     print("Loop Started")
     base_ind = set(np.random.choice(np.arange(len(dataset)), 100, replace=False))
     for it in range(10):
@@ -245,7 +244,7 @@ def completeLoop(X,y,base_ind):
       model.load_state_dict(checkpoint['state_dict'])
 
     e= Engine(model,criterion,optimizer, verbose= True, print_freq= 10)
-    trainset_query= Detection.select(Detection.id,Oracle.label,Detection.embedding).join(Oracle).where(Oracle.status==0, Detection.kind==DetectionKind.UserDetection.value) 
+    trainset_query= Detection.select(Detection.id,Oracle.label,Detection.embedding).join(Oracle).where(Oracle.status==0, Detection.kind==DetectionKind.UserDetection.value)
     embedding_dataset = SQLDataLoader(trainset_query, "all_crops/SS_full_crops", True, num_workers= 4, batch_size= 64)
     print(len(embedding_dataset))
     num_classes= 48#len(run_dataset.getClassesInfo()[0])
@@ -435,7 +434,7 @@ def main():
     #mapp=(find_probablemap(label,labels, K=args.K))
     #print("Clusters")
     #for i,x in enumerate(labels):
-    #  labels[i]= mapp[x] 
+    #  labels[i]= mapp[x]
     #print(np.sum(labels == label)/labels.size)
     #print("Confidence Active Learning")
     #idx = np.random.choice(np.arange(len(paths)), 100, replace=False)

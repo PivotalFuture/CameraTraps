@@ -1,6 +1,5 @@
 import cPickle as  pickle
 import matplotlib
-matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import matplotlib.cm as cm
 import numpy as np
@@ -27,17 +26,17 @@ def compute_precision_recall_per_loc(detection_file, db_file):
         data = json.load(f)
     print('Images: ', len(data['images']))
     print('Detection result Images: ', len(detection_results['images']))
-    
+
     loc_to_ims = {}
     for im in data['images']:
         if im['location'] not in loc_to_ims:
             loc_to_ims[im['location']] = []
         loc_to_ims[im['location']].append(im['id'])
-   
+
     print('Clustering detections by image...')
     #print(detection_results.keys())
     # group the detections and gts by image id:
-    per_image_detections, per_image_gts = cluster_detections_by_image(detection_results) 
+    per_image_detections, per_image_gts = cluster_detections_by_image(detection_results)
 
     per_image_eval = per_image_evaluation.PerImageEvaluation(
         num_groundtruth_classes=1,
@@ -50,21 +49,21 @@ def compute_precision_recall_per_loc(detection_file, db_file):
     detection_scores = {loc:[] for loc in loc_to_ims}
     num_total_gts = {loc:0 for loc in loc_to_ims}
     count = {loc:0 for loc in loc_to_ims}
-    
+
     precision = {}
     recall = {}
     average_precision = {}
 
     for cat, images in loc_to_ims.iteritems():
-        
+
         for image_id in images:
             if image_id not in per_image_detections:
                 #print(image_id)
                 count[cat] += 1
                 continue
-            scores, tp_fp_labels = get_results_per_image(per_image_detections[image_id], 
+            scores, tp_fp_labels = get_results_per_image(per_image_detections[image_id],
                                                          per_image_gts[image_id], per_image_eval)
-          
+
             detection_labels[cat].append(tp_fp_labels)
             detection_scores[cat].append(scores)
             num_gts = len(per_image_gts[image_id]['bboxes'])
@@ -79,7 +78,7 @@ def compute_precision_recall_per_loc(detection_file, db_file):
             precision[cat], recall[cat] = metrics.compute_precision_recall(
                 scores, labels, num_total_gts[cat]
             )
-        
+
             average_precision[cat] = metrics.compute_average_precision(precision[cat], recall[cat])
         else:
             print("no detections for " + cat)
@@ -97,7 +96,7 @@ if __name__ == '__main__':
     #recall_idx = np.argmin([np.abs(x-recall_thresh) for x in loc_recall])
     #print('Trans prec. at ',loc_recall[recall_idx],' recall: ', loc_prec[recall_idx])
     plt.figure("Precision Recall Curves per Location")
-    
+
     colors = cm.rainbow(np.linspace(0, 1, len(prec.keys())))
     for i in range(len(prec.keys())):
         cat = prec.keys()[i]
@@ -121,7 +120,3 @@ if __name__ == '__main__':
     plt.title("Per-location average precision")
 
     np.savez(det_folder + exp_name + '_per_loc_prec_recall_data.npz', prec = prec, recall = recall, ap = ap)
-
-
-
-        

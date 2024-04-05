@@ -1,6 +1,5 @@
 import cPickle as pickle
 import matplotlib
-matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import numpy as np
 import json
@@ -13,17 +12,17 @@ from utils import *
 det_folder = '/data/experiments/object_detection/inception_resnet_v2_atrous/exported_125883/predictions/'
 
 def compute_precision_recall(detection_file, detection_results=None,images_to_consider='all', get_night_day = None):
-    
+
     if detection_results == None:
         print('Loading detection file...')
-    
+
         with open(detection_file) as f:
             detection_results = pickle.load(f)
-    
+
     print('Clustering detections by image...')
     #print(detection_results.keys())
     # group the detections by image id:
-    
+
     use_im = get_images_to_consider(detection_results, images_to_consider, get_night_day)
 
     per_image_detections, per_image_gts = cluster_detections_by_image(detection_results, use_im)
@@ -34,7 +33,7 @@ def compute_precision_recall(detection_file, detection_results=None,images_to_co
         nms_iou_threshold=1.0,
         nms_max_output_boxes=10000
     )
-    
+
     print('Running per-object analysis...')
 
     detection_labels = []
@@ -77,8 +76,8 @@ def compute_precision_recall(detection_file, detection_results=None,images_to_co
                 x1, y1, x2, y2 = gts['bboxes'][i]
                 groundtruth_boxes[i] = np.array([y1, x1, y2, x2])
                 groundtruth_class_labels[i] = gts['labels'][i] - 1
-            
-            #print(groundtruth_boxes, groundtruth_class_labels,detected_scores[0],detected_boxes[0], detected_class_labels[:2]) 
+
+            #print(groundtruth_boxes, groundtruth_class_labels,detected_scores[0],detected_boxes[0], detected_class_labels[:2])
             scores, tp_fp_labels, is_class_correctly_detected_in_image = (
                 per_image_eval.compute_object_detection_metrics(
                     detected_boxes=detected_boxes,
@@ -92,16 +91,16 @@ def compute_precision_recall(detection_file, detection_results=None,images_to_co
                     groundtruth_masks=groundtruth_masks
                 )
             )
-            
+
             #print(scores, tp_fp_labels)
 
             detection_labels.append(tp_fp_labels[0])
             detection_scores.append(scores[0])
             num_total_gts += num_gts
-            
+
             count +=1
             if count % 1000 == 0:
-                print(str(count) + ' images complete') 
+                print(str(count) + ' images complete')
 
             #if (tp_fp_labels[0].shape[0] != num_detections):
             #    print('Incorrect label length')
@@ -117,15 +116,15 @@ def compute_precision_recall(detection_file, detection_results=None,images_to_co
 
     scores = np.concatenate(detection_scores)
     labels = np.concatenate(detection_labels).astype(np.bool)
-    
+
     precision, recall = metrics.compute_precision_recall(
         scores, labels, num_total_gts
     )
-    
-    
+
+
     average_precision = metrics.compute_average_precision(precision, recall)
-    
-    
+
+
     return precision, recall, average_precision
 
 

@@ -8,7 +8,7 @@ Largely drawn from CameraTraps/data_management/databases/classification/make_cla
 
 import argparse, cv2, glob, json, os, pickle, random, sys, tqdm, uuid
 import numpy as np
-import matplotlib; matplotlib.use('Agg')
+import matplotlib
 from PIL import Image
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),
                              '../../data_management/tfrecords/utils'))
@@ -28,7 +28,7 @@ if StrictVersion(tf.__version__) < StrictVersion('1.9.0'):
   raise ImportError('Please upgrade your TensorFlow installation to v1.9.* or later!')
 
 
-########################################################## 
+##########################################################
 ### Configuration
 
 parser = argparse.ArgumentParser()
@@ -64,8 +64,8 @@ PATH_TO_FROZEN_GRAPH = args.frozen_graph
 assert os.path.isfile(PATH_TO_FROZEN_GRAPH), PATH_TO_FROZEN_GRAPH + ' does not exist'
 
 # Padding around the detected objects when cropping
-# 1.3 for the cropping during test time and 1.3 for 
-# the context that the CNN requires in the left-over 
+# 1.3 for the cropping during test time and 1.3 for
+# the context that the CNN requires in the left-over
 # image
 PADDING_FACTOR = args.padding_factor
 assert PADDING_FACTOR >= 1, 'Padding factor should be equal or larger 1'
@@ -117,7 +117,7 @@ with graph.as_default():
         # For all images in the image directoryig
         imgs_in_dir = glob.glob(os.path.join(IMAGE_DIR, '**/*.JPG'), recursive=True) # All images in directory (may be a subset of the dataset)
         for cur_image in tqdm.tqdm(sorted(imgs_in_dir)):
-            
+
             # Load image
             image = np.array(Image.open(cur_image))
             if image.dtype != np.uint8:
@@ -127,7 +127,7 @@ with graph.as_default():
             # Run inference
             output_dict = sess.run(tensor_dict,
                             feed_dict={image_tensor: np.expand_dims(image, 0)})
-            
+
             # all outputs are float32 numpy arrays, so convert types as appropriate
             output_dict['num_detections'] = int(output_dict['num_detections'][0])
             output_dict['detection_classes'] = output_dict[
@@ -139,7 +139,7 @@ with graph.as_default():
 
             # Add detections to the collection
             detections[cur_image] = output_dict
-            
+
             # Get info about the image
             imsize = Image.open(cur_image).size
             imwidth = imsize[0]
@@ -187,10 +187,10 @@ with graph.as_default():
                 if selected_boxes.shape[0] > 1:
                     new_file_base, new_file_ext = os.path.splitext(new_file_name)
                     new_file_name = '{}_{}{}'.format(new_file_base, box_id, new_file_ext)
-                
+
                 # The absolute file path where we will store the image
                 out_file = os.path.join(OUTPUT_DIR, new_file_name)
-                
+
                 if not os.path.exists(out_file):
                     try:
                         img = np.array(Image.open(cur_image))
@@ -202,7 +202,7 @@ with graph.as_default():
                         continue
                 else:
                     # if COCO_OUTPUT_DIR is set, then we will only use the shape
-                    # of cropped_img in the following code. So instead of reading 
+                    # of cropped_img in the following code. So instead of reading
                     # cropped_img = np.array(Image.open(out_file))
                     # we can speed everything up by reading only the size of the image
                     cropped_img = np.zeros((3,) + Image.open(out_file).size).T

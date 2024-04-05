@@ -1,6 +1,5 @@
 import cPickle as  pickle
 import matplotlib
-matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import numpy as np
 import json
@@ -14,7 +13,7 @@ det_folder = '/ai4efs/models/object_detection/faster_rcnn_inception_resnet_v2_at
 db_file = '/ai4efs/databases/caltechcameratraps/CaltechCameraTrapsFullAnnotations.json'
 
 def get_im_to_seq_map(db_file):
-    
+
     with open(db_file,'r') as f:
         data = json.load(f)
     im_to_seq = {}
@@ -23,10 +22,10 @@ def get_im_to_seq_map(db_file):
     return im_to_seq
 
 def compute_precision_recall_with_sequences(detection_file, db_file,detection_results=None,images_to_consider='all', get_night_day = None):
-    
+
     if detection_results == None:
         print('Loading detection file...')
-    
+
         with open(detection_file) as f:
             detection_results = pickle.load(f)
 
@@ -37,7 +36,7 @@ def compute_precision_recall_with_sequences(detection_file, db_file,detection_re
             if im_to_seq[im] not in seqs:
                 seqs[im_to_seq[im]] = []
             seqs[im_to_seq[im]].append(im)
-    
+
     print('Clustering detections by image...')
 
     use_im = get_images_to_consider(detection_results, images_to_consider, get_night_day)
@@ -50,7 +49,7 @@ def compute_precision_recall_with_sequences(detection_file, db_file,detection_re
         nms_iou_threshold=1.0,
         nms_max_output_boxes=10000
     )
-    
+
     print('Running per-image analysis...')
 
     detection_labels = []
@@ -66,7 +65,7 @@ def compute_precision_recall_with_sequences(detection_file, db_file,detection_re
         valid_max_scores = []
         #print(seq)
         for image_id in seqs[seq]:
-                    
+
         #for image_id, dets in per_image_detections.iteritems():
             dets = per_image_detections[image_id]
             num_detections = len(dets['bboxes'])
@@ -93,7 +92,7 @@ def compute_precision_recall_with_sequences(detection_file, db_file,detection_re
             max_seq_scores.append(np.max(detected_scores))
             valid_max_scores.append(np.max(detected_scores))
             box_id = np.argmax(detected_scores)
-            
+
             gts = per_image_gts[image_id]
             num_gts = len(gts['bboxes'])
             #seq_num_gts.append(num_gts)
@@ -109,7 +108,7 @@ def compute_precision_recall_with_sequences(detection_file, db_file,detection_re
                 groundtruth_is_difficult_list = np.zeros(num_gts, dtype=bool)
                 groundtruth_is_group_of_list = np.zeros(num_gts, dtype=bool)
 
-             
+
                 for i in range(num_gts):
                     x1, y1, x2, y2 = gts['bboxes'][i]
                     groundtruth_boxes[i] = np.array([y1, x1, y2, x2])
@@ -118,7 +117,7 @@ def compute_precision_recall_with_sequences(detection_file, db_file,detection_re
                 ious = np_box_ops.iou(detected_boxes,groundtruth_boxes)
                 if np.max(ious[box_id, :]) < 0.5:
                     valid_max_scores[-1] = 0
-                
+
                 scores, tp_fp_labels, is_class_correctly_detected_in_image = (
                 per_image_eval.compute_object_detection_metrics(
                     detected_boxes=detected_boxes,
@@ -132,11 +131,11 @@ def compute_precision_recall_with_sequences(detection_file, db_file,detection_re
                     groundtruth_masks=groundtruth_masks
                     )
                 )
-                
+
                 seq_detection_labels.append(tp_fp_labels[0])
                 seq_detection_scores.append(scores[0])
                 #num_total_gts += 1
-            
+
             else:
                 seq_num_gts.append(0)
                 seq_detection_labels.append(np.zeros(num_detections, dtype=np.int32))
@@ -156,7 +155,7 @@ def compute_precision_recall_with_sequences(detection_file, db_file,detection_re
             best_im = np.argmax(max_seq_scores)
             #print(best_im, best_score)
             for i in range(len(seqs[seq])):
-                
+
                 temp_labels = np.zeros(len(seq_detection_labels[i]),  dtype=np.int32)
                 temp_scores = np.zeros(len(seq_detection_scores[i]), dtype=np.float32)
                 for j in range(min(seq_num_gts[i], len(temp_labels))):
@@ -170,13 +169,13 @@ def compute_precision_recall_with_sequences(detection_file, db_file,detection_re
             #print('no valid box')
             seq_detection_label[0] = False
             seq_detection_score[0] = np.max(max_seq_scores)
-        
+
 
         #if sum(seq_num_gts)>0:
         if is_gt_in_seq:
             num_total_gts+=1
-        
-       
+
+
         detection_labels.append(seq_detection_label)
         detection_scores.append(seq_detection_score)
 
@@ -190,8 +189,8 @@ def compute_precision_recall_with_sequences(detection_file, db_file,detection_re
     )
 
     average_precision = metrics.compute_average_precision(precision, recall)
-    
-    
+
+
     return precision, recall, average_precision
 
 if __name__ == '__main__':

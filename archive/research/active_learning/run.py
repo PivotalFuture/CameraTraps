@@ -6,7 +6,6 @@ np.set_printoptions(threshold=np.inf)
 import matplotlib
 from scipy import stats
 from itertools import count
-#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN, MiniBatchKMeans
 from sklearn.neighbors import KNeighborsClassifier
@@ -117,7 +116,7 @@ def finetune_embedding(model, loss_type, train_dataset, P, K, epochs):
 
 def main():
     args = parser.parse_args()
-    
+
     # Initialize Database
     ## database connection credentials
     DB_NAME = args.db_name
@@ -152,7 +151,7 @@ def main():
     dataset.updateEmbedding(model)
     # plot_embedding_images(dataset.em[:], np.asarray(dataset.getlabels()) , dataset.getpaths(), {})
     # plot_embedding_images(dataset.em[:], np.asarray(dataset.getalllabels()) , dataset.getallpaths(), {})
-    
+
     # Random examples to start
     #random_ids = np.random.choice(dataset.current_set, 1000, replace=False).tolist()
     #random_ids = selectSamples(dataset.em[dataset.current_set], dataset.current_set, 2000)
@@ -203,17 +202,17 @@ def main():
         dataset.set_kind(DetectionKind.UserDetection.value)
         X_train = dataset.em[dataset.current_set]
         y_train = np.asarray(dataset.getlabels())
-        
+
         kwargs["model"].fit(X_train, y_train)
         joblib.dump(kwargs["model"], "%s/%s_%04d.skmodel"%(args.experiment_name, 'classifier', numLabeled))
-        
+
         # Test on the samples that have not been labeled
         dataset.set_kind(DetectionKind.ModelDetection.value)
         dataset.embedding_mode()
         X_test = dataset.em[dataset.current_set]
         y_test = np.asarray(dataset.getlabels())
         print("Accuracy", kwargs["model"].score(X_test, y_test))
-        
+
         sys.stdout.flush()
         if numLabeled % 2000 == 1000:
             dataset.set_kind(DetectionKind.UserDetection.value)

@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 file_1 = '/ai4efs/models/object_detection/faster_rcnn_inception_resnet_v2_atrous/train_on_ss/predictions/eccv_train_per_cat_prec_recall_data.npz'
@@ -56,22 +55,3 @@ ax.legend((rects1[0],rects2[0], rects3[0], rects4[0]),('w/deer, w/o iNat','w/ de
 plt.tight_layout()
 
 plt.savefig('/ai4efs/models/object_detection/faster_rcnn_inception_resnet_v2_atrous/train_on_ss_no_deer_and_inat/predictions/compare_per_seq_mAP_w_deer_and_no_deer.jpg')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

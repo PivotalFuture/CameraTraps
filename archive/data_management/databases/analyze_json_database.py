@@ -15,7 +15,6 @@ import os
 import matplotlib
 import numpy as np
 
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
@@ -30,7 +29,7 @@ if not os.path.exists(plot_directory):
 
 
 #%% Load source data
-    
+
 with open(db_file,'r') as f:
     data = json.load(f)
 
@@ -72,7 +71,7 @@ for im in images:
 
 
 #%% Make plot of category distribution
-    
+
 sortedCats = sorted(zip([len(cat_to_ims[cat]) for cat in cat_to_ims],[cat for cat in cat_to_ims]), key = lambda t: t[0], reverse = True)
 plt.bar(range(len(sortedCats)),[cat[0] for cat in sortedCats], log = True)
 plt.ylabel('Number of images')
@@ -80,7 +79,7 @@ plt.title('Number of images per category')
 plt.ylabel('Categories')
 plt.xticks(range(len(sortedCats)), [cat_id_to_name[cat[1]] for cat in sortedCats], rotation = 90)
 plt.tight_layout()
-plt.savefig(plot_directory + '/ims_per_cat.jpg')  
+plt.savefig(plot_directory + '/ims_per_cat.jpg')
 plt.clf()
 
 
@@ -93,7 +92,7 @@ plt.title('Number of images per location')
 plt.ylabel('Locations')
 plt.xticks(range(len(loc_to_ims)), [loc[1] for loc in sortedLocs], rotation = 90, fontsize = 2)
 plt.tight_layout()
-plt.savefig(plot_directory + '/ims_per_loc.jpg', dpi = 500)   
+plt.savefig(plot_directory + '/ims_per_loc.jpg', dpi = 500)
 plt.clf()
 
 cat_count_per_location = {loc[1]:{cat['id']:0 for cat in categories} for loc in sortedLocs}
@@ -134,7 +133,7 @@ plt.title('Number of images per season')
 plt.ylabel('Seasonss')
 plt.xticks(range(len(sortedLocs)), [loc[1] for loc in sortedLocs], rotation = 90)
 plt.tight_layout()
-plt.savefig(plot_directory + '/ims_per_season.jpg')   
+plt.savefig(plot_directory + '/ims_per_season.jpg')
 plt.clf()
 
 
@@ -150,7 +149,7 @@ plt.title('Number of lion images per location')
 plt.ylabel('Locations')
 plt.xticks(range(len(loc_to_lion_ims)), [loc[1] for loc in sortedLocs], rotation = 90, fontsize = 6)
 plt.tight_layout()
-plt.savefig(plot_directory + '/lion_ims_per_loc.jpg')   
+plt.savefig(plot_directory + '/lion_ims_per_loc.jpg')
 plt.clf()
 
 
@@ -166,7 +165,7 @@ plt.title('Number of elephant images per location')
 plt.ylabel('Locations')
 plt.xticks(range(len(loc_to_elephant_ims)), [loc[1] for loc in sortedLocs], rotation = 90, fontsize = 6)
 plt.tight_layout()
-plt.savefig(plot_directory + '/elephant_ims_per_loc.jpg')   
+plt.savefig(plot_directory + '/elephant_ims_per_loc.jpg')
 plt.clf()
 
 lions_and_elephants = list(set(loc_to_elephant_ims.keys()).intersection(set(loc_to_lion_ims.keys())))
