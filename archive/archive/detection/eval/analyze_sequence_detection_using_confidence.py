@@ -1,6 +1,5 @@
 import cPickle as  pickle
 import matplotlib
-matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import numpy as np
 import json
@@ -13,10 +12,10 @@ det_folder = '/ai4efs/models/object_detection/faster_rcnn_inception_resnet_v2_at
 db_file = '/ai4efs/databases/caltechcameratraps/CaltechCameraTrapsFullAnnotations.json'
 
 def compute_precision_recall_with_sequences(detection_file, db_file, detection_results=None,images_to_consider='all', get_night_day = None):
-    
+
     if detection_results == None:
         print('Loading detection file...')
-    
+
         with open(detection_file) as f:
             detection_results = pickle.load(f)
 
@@ -26,7 +25,7 @@ def compute_precision_recall_with_sequences(detection_file, db_file, detection_r
         if im in im_to_seq:
             if im_to_seq[im] not in seqs:
                 seqs[im_to_seq[im]] = []
-            seqs[im_to_seq[im]].append(im)    
+            seqs[im_to_seq[im]].append(im)
 
     print('Clustering detections by image...')
 
@@ -63,14 +62,14 @@ def compute_precision_recall_with_sequences(detection_file, db_file, detection_r
                 dets = per_image_detections[image_id]
                 if max(im_id_to_box_scores[image_id]) > conf:
                     seq_detection_label = True
-        
+
                 gts = per_image_gts[image_id]
                 num_gts = len(gts['bboxes'])
-            
+
                 if num_gts > 0:
                     seq_gt_label = True
-                   
-            if seq_gt_label == True: 
+
+            if seq_gt_label == True:
                 if seq_detection_label == True:
                     tp += 1
                 else:
@@ -84,13 +83,13 @@ def compute_precision_recall_with_sequences(detection_file, db_file, detection_r
         seq_rec = tp / float(tp + fn)
         prec.append(seq_prec)
         rec.append(seq_rec)
-    
+
     prec.reverse()
     rec.reverse()
     scores.reverse()
     average_precision = metrics.compute_average_precision(np.asarray(prec), np.asarray(rec))
-    
-    
+
+
     return prec, rec, average_precision, scores
 
 if __name__ == '__main__':

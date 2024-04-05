@@ -1,6 +1,5 @@
 import cPickle as  pickle
 import matplotlib
-matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import numpy as np
 import json
@@ -13,13 +12,13 @@ from utils import *
 det_folder = '/ai4efs/models/object_detection/faster_rcnn_inception_resnet_v2_atrous/train_on_eccv_18_only/predictions/'
 
 def compute_precision_recall_with_images(detection_file, detection_results=None,images_to_consider='all', get_night_day = None):
-    
+
     if detection_results == None:
         print('Loading detection file...')
-    
+
         with open(detection_file) as f:
             detection_results = pickle.load(f)
-    
+
     print('Clustering detections by image...')
 
     use_im = get_images_to_consider(detection_results, images_to_consider, get_night_day)
@@ -32,7 +31,7 @@ def compute_precision_recall_with_images(detection_file, detection_results=None,
         nms_iou_threshold=1.0,
         nms_max_output_boxes=10000
     )
-    
+
     print('Running per-image analysis...')
 
     detection_labels = []
@@ -48,8 +47,8 @@ def compute_precision_recall_with_images(detection_file, detection_results=None,
         count +=1
         if count % 1000 == 0:
             print(str(count) + ' images complete')
-        
-        
+
+
         num_detections = len(dets['bboxes'])
 
         # [ymin, xmin, ymax, xmax] in absolute image coordinates.
@@ -69,11 +68,11 @@ def compute_precision_recall_with_images(detection_file, detection_results=None,
         max_im_scores.append(np.max(detected_scores))
         valid_max_scores.append(np.max(detected_scores))
         box_id = np.argmax(detected_scores)
-            
+
         gts = per_image_gts[image_id]
         num_gts = len(gts['bboxes'])
         im_num_gts = num_gts
-            
+
         if num_gts > 0:
 
             # [ymin, xmin, ymax, xmax] in absolute image coordinates
@@ -84,7 +83,7 @@ def compute_precision_recall_with_images(detection_file, detection_results=None,
             groundtruth_is_difficult_list = np.zeros(num_gts, dtype=bool)
             groundtruth_is_group_of_list = np.zeros(num_gts, dtype=bool)
 
-             
+
             for i in range(num_gts):
                 x1, y1, x2, y2 = gts['bboxes'][i]
                 groundtruth_boxes[i] = np.array([y1, x1, y2, x2])
@@ -93,7 +92,7 @@ def compute_precision_recall_with_images(detection_file, detection_results=None,
             ious = np_box_ops.iou(detected_boxes,groundtruth_boxes)
             if np.max(ious[box_id, :]) < 0.5:
                 valid_max_scores[-1] = 0
-                
+
                 #print('detected animal box')
 
             #print(groundtruth_boxes, groundtruth_class_labels,detected_scores[0],detected_boxes[0], detected_class_labels[0])
@@ -136,8 +135,8 @@ def compute_precision_recall_with_images(detection_file, detection_results=None,
             #print('valid box')
             #best_im = np.argmax(max_im_scores)
             #print(best_im, best_score)
-            
-                
+
+
             #temp_labels = np.zeros(len(im_detection_labels),  dtype=np.int32)
             #temp_scores = np.zeros(len(im_detection_scores), dtype=np.float32)
             #for j in range(min(im_num_gts, len(im_detection_labels))):
@@ -147,12 +146,12 @@ def compute_precision_recall_with_images(detection_file, detection_results=None,
             #im_detection_scores = temp_scores
             im_detection_label[0] = True
             im_detection_score[0] = best_score
-        else: 
+        else:
             im_detection_label[0] = False
             im_detection_score[0] = np.max(max_im_scores)
-        
+
         #num_total_gts+=im_num_gts
-        
+
         detection_labels.append(im_detection_label)
         detection_scores.append(im_detection_score)
 
@@ -167,8 +166,8 @@ def compute_precision_recall_with_images(detection_file, detection_results=None,
     print(np.sort(scores))
 
     average_precision = metrics.compute_average_precision(precision, recall)
-    
-    
+
+
     return precision, recall, average_precision, scores
 
 if __name__ == '__main__':

@@ -20,7 +20,6 @@ np.set_printoptions(threshold=np.inf)
 import matplotlib
 from scipy import stats
 from itertools import count
-#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN, MiniBatchKMeans
 from sklearn.neighbors import KNeighborsClassifier
@@ -59,7 +58,7 @@ from sklearn.metrics import pairwise_distances_argmin_min
 from torch.utils.data import TensorDataset, DataLoader
 import torch.nn as nn
 import torch.optim as optim
-import torch 
+import torch
 
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
@@ -145,14 +144,14 @@ def getDistance(embd,archive,sample):
 
 def moveRecords(dataset, srcKind, destKind, rList):
       #query= Detection.update(kind = destKind.value).where(Detection.id.in_(rList), Detection.kind == srcKind.value)
-      
+
       #query.execute()
       for e in rList:
           dataset.set_indices[srcKind].remove(e)
           dataset.set_indices[destKind].append(e)
 
 def train_eval_classifier(clf_model, unlabeled_dataset, model, pth, epochs = 15):
-    trainset_query = Detection.select(Detection.id,Oracle.label).join(Oracle).where(Detection.kind == DetectionKind.UserDetection.value) 
+    trainset_query = Detection.select(Detection.id,Oracle.label).join(Oracle).where(Detection.kind == DetectionKind.UserDetection.value)
     train_dataset = SQLDataLoader(trainset_query, os.path.join(args.run_data, 'crops'), is_training= True)
     train_dataset.updateEmbedding(model)
     train_dataset.embedding_mode()
@@ -179,7 +178,7 @@ def custom_policy(step):
     if step<= int(x):
       return details[int((length-1)/2)+i]
   return details[-1]
-   
+
 def adjust_lr(optimizer, step):
   param= custom_policy(step)
   for param_group in optimizer.param_groups:
@@ -194,7 +193,7 @@ def finetune_embedding(model, train_dataset, P, K, epochs):
     e= Engine(model, criterion, optimizer, verbose = True, print_freq = 10)
     for epoch in range(epochs):
         e.train_one_epoch(train_loader, epoch, False)
- 
+
 
 def main():
     args = parser.parse_args()
@@ -206,7 +205,7 @@ def main():
     db.connect()
     print("connected")
     print("CompleteLoop")
-    
+
     checkpoint = load_checkpoint(args.base_model)
     embedding_net = EmbeddingNet(checkpoint['arch'], checkpoint['feat_dim'], False)
     #embedding_net = EmbeddingNet('resnet50', 256, True)

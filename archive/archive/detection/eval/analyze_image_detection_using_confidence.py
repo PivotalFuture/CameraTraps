@@ -1,6 +1,5 @@
 import cPickle as  pickle
 import matplotlib
-matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import numpy as np
 import json
@@ -18,18 +17,18 @@ def frange(start, stop, step):
         i += step
 
 def compute_precision_recall_with_images(detection_file, detection_results=None, images_to_consider='all', get_night_day = None):
-    
+
     if detection_results == None:
         print('Loading detection file...')
-    
+
         with open(detection_file) as f:
             detection_results = pickle.load(f)
-    
+
     print('Clustering detections by image...')
     use_im = get_images_to_consider(detection_results, images_to_consider, get_night_day)
 
     per_image_detections, per_image_gts = cluster_detections_by_image(detection_results, use_im)
-    
+
     im_id_to_box_scores = {im:per_image_detections[im]['scores'] for im in per_image_detections}
     print('Running per-image analysis...')
     #need to loop over confidence values
@@ -57,10 +56,10 @@ def compute_precision_recall_with_images(detection_file, detection_results=None,
             '''
             if max(im_id_to_box_scores[image_id]) > conf:
                 im_detection_label = True
-        
+
             gts = per_image_gts[image_id]
             num_gts = len(gts['bboxes'])
-            
+
             if num_gts > 0:
                 im_gt_label = True
                 num_total_gts += 1
@@ -77,13 +76,13 @@ def compute_precision_recall_with_images(detection_file, detection_results=None,
         im_rec = tp / float(tp + fn)
         prec.append(im_prec)
         rec.append(im_rec)
-    
+
     prec.reverse()
     rec.reverse()
     scores.reverse()
     average_precision = metrics.compute_average_precision(np.asarray(prec), np.asarray(rec))
-    
-    
+
+
     return prec, rec, average_precision, scores
 
 if __name__ == '__main__':

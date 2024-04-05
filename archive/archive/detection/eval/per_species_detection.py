@@ -1,6 +1,5 @@
 import cPickle as  pickle
 import matplotlib
-matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import matplotlib.cm as cm
 import numpy as np
@@ -41,7 +40,7 @@ def compute_precision_recall_per_cat(detection_file, db_file):
     #add all images that don't have annotations, with cat empty
     for im in data['images']:
         if im['id'] not in im_to_cat:
-            im_to_cat[im['id']] = empty_id    
+            im_to_cat[im['id']] = empty_id
 
     cat_id_to_cat = {}
     for cat in data['categories']:
@@ -61,7 +60,7 @@ def compute_precision_recall_per_cat(detection_file, db_file):
     print('Clustering detections by image...')
     #print(detection_results.keys())
     # group the detections and gts by image id:
-    per_image_detections, per_image_gts = cluster_detections_by_image(detection_results) 
+    per_image_detections, per_image_gts = cluster_detections_by_image(detection_results)
 
     per_image_eval = per_image_evaluation.PerImageEvaluation(
         num_groundtruth_classes=1,
@@ -74,22 +73,22 @@ def compute_precision_recall_per_cat(detection_file, db_file):
     detection_scores = {cat:[] for cat in cat_to_ims}
     num_total_gts = {cat:0 for cat in cat_to_ims}
     count = {cat:0 for cat in cat_to_ims}
-    
+
     precision = {}
     recall = {}
     average_precision = {}
 
     for cat, images in cat_to_ims.iteritems():
-        
+
         for image_id in images:
             if image_id not in per_image_detections:
                 #print(image_id)
                 count[cat] += 1
                 continue
 
-            scores, tp_fp_labels = get_results_per_image(per_image_detections[image_id], 
+            scores, tp_fp_labels = get_results_per_image(per_image_detections[image_id],
                                                          per_image_gts[image_id], per_image_eval)
-          
+
             detection_labels[cat].append(tp_fp_labels)
             detection_scores[cat].append(scores)
             num_gts = len(per_image_gts[image_id]['bboxes'])
@@ -127,7 +126,7 @@ if __name__ == '__main__':
         cat = prec.keys()[i]
         if recall[cat] is not None:
             plt.plot(recall[cat], prec[cat], color = colors[i], label=cat_id_to_cat[cat])
-        
+
     plt.xlim([0, 1])
     plt.ylim([0, 1])
     plt.ylabel("Precision")
@@ -137,7 +136,3 @@ if __name__ == '__main__':
     plt.savefig(det_folder + exp_name + '_PR_per_cat.jpg')
 
     np.savez(det_folder + exp_name + '_per_cat_prec_recall_data.npz', prec = prec, recall = recall, ap = ap, cat_id_to_cat = cat_id_to_cat)
-
-
-
-        

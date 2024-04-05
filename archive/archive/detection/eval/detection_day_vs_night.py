@@ -1,5 +1,4 @@
 import matplotlib
-matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import numpy as np
 import json
@@ -40,4 +39,3 @@ if __name__ == '__main__':
     plt.savefig(det_folder + exp_name +'_PR_day_v_night.jpg')
 
     np.savez(det_folder + exp_name + '_day_v_night_prec_recall_data.npz', day_prec=day_prec, day_recall=day_recall, day_ap=day_ap, night_prec=night_prec, night_recall=night_recall, night_ap=night_ap)
-

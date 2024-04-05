@@ -1,5 +1,4 @@
 import matplotlib
-matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import numpy as np
 import json
@@ -47,4 +46,3 @@ if __name__ == '__main__':
     plt.savefig(det_folder + exp_name +'_PR_obj_im_seq.jpg')
 
     np.savez(det_folder + exp_name + '_obj_im_seq_prec_recall_data.npz', prec=prec, recall=recall, ap=ap, im_prec=im_prec, im_recall=im_recall, im_ap=im_ap, seq_prec=seq_prec, seq_recall=seq_recall, seq_ap=seq_ap)
-

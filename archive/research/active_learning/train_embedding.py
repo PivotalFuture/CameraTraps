@@ -3,7 +3,6 @@ import os
 import random
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
 
 import torch
 import torch.nn as nn
@@ -81,7 +80,7 @@ def main():
     train_dataset = ExtendedImageFolder(args.train_data)
     if args.val_data is not None:
         val_dataset = ExtendedImageFolder(args.val_data)
-    
+
     num_classes = len(train_dataset.classes)
     if args.balanced_P == -1:
         args.balanced_P = num_classes
@@ -99,7 +98,7 @@ def main():
         if args.val_data is not None:
             val_loader = val_dataset.getBalancedLoader(P = args.balanced_P, K = args.balanced_K, num_workers = args.num_workers, transfm = 'val')
             val_embd_loader = val_dataset.getSingleLoader(batch_size = 128, shuffle = False, num_workers = args.num_workers, transfm = 'val')
-    
+
     # check if a GPU is available
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print("DEVICE: ", device)

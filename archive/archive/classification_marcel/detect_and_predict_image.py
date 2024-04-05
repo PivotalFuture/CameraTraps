@@ -22,7 +22,6 @@ import sys
 import argparse
 import matplotlib
 import PIL
-matplotlib.use('Agg')
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -390,7 +389,7 @@ def render_bounding_boxes(boxes, scores, species_scores, class_names, input_file
             best_corner_idx = ((center - corners)**2).sum(axis=1).argmin()
             # Get the corresponding coordinates ...
             best_corner = corners[best_corner_idx] * np.array([image_width, image_height])
-            # ... and alignment for the text box 
+            # ... and alignment for the text box
             alignment_styles = [dict(horizontalalignment='left', verticalalignment='top'),
                               dict(horizontalalignment='left', verticalalignment='bottom'),
                               dict(horizontalalignment='right', verticalalignment='top'),

@@ -17,7 +17,6 @@ import numpy as np
 import matplotlib
 from scipy import stats
 from itertools import count
-#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN, MiniBatchKMeans
 from sklearn.neighbors import KNeighborsClassifier
@@ -45,7 +44,7 @@ from sklearn.metrics import silhouette_samples, confusion_matrix
 from torch.utils.data import TensorDataset, DataLoader
 import torch.nn as nn
 import torch.optim as optim
-import torch 
+import torch
 
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
@@ -99,7 +98,7 @@ def apply_different_methods(X_train, y_train, X_test, y_test):
 
     criterion = nn.CrossEntropyLoss()
     net= ClassificationNet(256,16)
-    optimizer = optim.Adam(net.parameters()) 
+    optimizer = optim.Adam(net.parameters())
     net.train()
     conf= ConfusionMatrix(24)
     for epoch in range(50):  # loop over the dataset multiple times
@@ -144,14 +143,14 @@ def apply_different_methods(X_train, y_train, X_test, y_test):
           top5.update(acc5[0], inputs.size(0))
     print('loss: %.3f Top-1: %.3f Top-5: %.3f' % (losses.avg,top1.avg,top5.avg))
 
-    
+
 
 print('Finished Training')
 
 """def completeClassificationLoop(dataset,model, num_classes):
     clf= ClassificationNet(model,num_classes).cuda()
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(clf.parameters(), lr=0.0001) 
+    optimizer = optim.Adam(clf.parameters(), lr=0.0001)
     print("Loop Started")
     base_ind = set(np.random.choice(np.arange(len(dataset)), 100, replace=False))
     for it in range(10):
@@ -332,7 +331,7 @@ def main():
     #mapp=(find_probablemap(label,labels, K=args.K))
     #print("Clusters")
     #for i,x in enumerate(labels):
-    #  labels[i]= mapp[x] 
+    #  labels[i]= mapp[x]
     #print(np.sum(labels == label)/labels.size)
     #print("Confidence Active Learning")
     #idx = np.random.choice(np.arange(len(paths)), 100, replace=False)
@@ -385,7 +384,7 @@ def extract_embeddings(dataloader, model):
         paths=[None]*len(dataloader.dataset)
         k = 0
         for images, target, path in dataloader:
-            
+
             images = images.cuda()
             embedding = model(images)
             embeddings[k:k+len(images)] = embedding.data.cpu().numpy().reshape((len(images),-1))
