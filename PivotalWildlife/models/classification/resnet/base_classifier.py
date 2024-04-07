@@ -17,6 +17,7 @@ class ResNetBackbone(ResNet):
     """
     Custom ResNet Backbone that extracts features from input images.
     """
+
     def _forward_impl(self, x):
         # Following the ResNet structure to extract features
         x = self.conv1(x)
@@ -38,6 +39,7 @@ class PlainResNetClassifier(nn.Module):
     """
     Basic ResNet Classifier that uses a custom ResNet backbone.
     """
+
     name = "PlainResNetClassifier"
 
     def __init__(self, num_cls=1, num_layers=50):
@@ -81,8 +83,12 @@ class PlainResNetClassifier(nn.Module):
         Initialize the features using pretrained weights.
         """
         init_weights = self.pretrained_weights.get_state_dict(progress=True)
-        init_weights = OrderedDict({k.replace("module.", "").replace("feature.", ""): init_weights[k]
-                                    for k in init_weights})
+        init_weights = OrderedDict(
+            {
+                k.replace("module.", "").replace("feature.", ""): init_weights[k]
+                for k in init_weights
+            }
+        )
         self.feature.load_state_dict(init_weights, strict=False)
         # Print missing and unused keys for debugging purposes
         load_keys = set(init_weights.keys())
@@ -97,28 +103,29 @@ class PlainResNetInference(nn.Module):
     """
     Inference module for the PlainResNet Classifier.
     """
+
     def __init__(self, num_cls=36, num_layers=50, weights=None, device="cpu", url=None):
         super(PlainResNetInference, self).__init__()
         self.device = device
         self.net = PlainResNetClassifier(num_cls=num_cls, num_layers=num_layers)
         if weights:
-            clf_weights = torch.load(weights, map_location=torch.device(self.device))
+            clf_weights = torch.load(weights)
         elif url:
-            clf_weights = load_state_dict_from_url(url, map_location=torch.device(self.device))
+            clf_weights = load_state_dict_from_url(url)
         else:
             raise Exception("Need weights for inference.")
         self.load_state_dict(clf_weights["state_dict"], strict=True)
-        self.eval()
+        self.eval().to(self.device)
         self.net.to(self.device)
 
     def results_generation(self, logits, img_id, id_strip=None):
         """
-        Process logits to produce final results. 
+        Process logits to produce final results.
 
         Args:
             logits (torch.Tensor): Logits from the network.
-            img_id (str): image path.       
-            id_strip (str): stiping string for better image id saving.       
+            img_id (str): image path.
+            id_strip (str): stiping string for better image id saving.
 
         Returns:
             dict: Dictionary containing the results.
@@ -141,7 +148,7 @@ class PlainResNetInference(nn.Module):
         total_logits = []
         total_paths = []
 
-        with tqdm(total=len(dataloader)) as pbar: 
+        with tqdm(total=len(dataloader)) as pbar:
             for batch in dataloader:
                 imgs, paths = batch
                 imgs = imgs.to(self.device)
