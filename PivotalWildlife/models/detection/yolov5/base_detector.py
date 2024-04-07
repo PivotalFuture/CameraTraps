@@ -57,14 +57,14 @@ class YOLOV5Base:
             Exception: If weights are not provided.
         """
         if weights:
-            checkpoint = torch.load(weights, map_location=torch.device(device))
+            checkpoint = torch.load(weights)
         elif url:
-            checkpoint = load_state_dict_from_url(
-                url, map_location=torch.device(self.device)
-            )
+            checkpoint = load_state_dict_from_url(url)
         else:
             raise Exception("Need weights for inference.")
-        return checkpoint["model"].float().fuse().eval()  # Convert to FP32 model
+        return (
+            checkpoint["model"].float().fuse().eval().to(torch.device)
+        )  # Convert to FP32 model
 
     def results_generation(self, preds, img_id, id_strip=None):
         """
