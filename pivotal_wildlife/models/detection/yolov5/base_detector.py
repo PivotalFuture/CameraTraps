@@ -237,7 +237,7 @@ class YOLOV5Base:
         else:
             raise Exception("Need weights for inference.")
         return (
-            checkpoint["model"].float().fuse().eval().to(torch.device)
+            checkpoint["model"].float().fuse().eval().to(torch.device(device))
         )  # Convert to FP32 model
 
     def results_generation(self, preds, img_id, id_strip=None):
