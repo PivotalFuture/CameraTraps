@@ -232,6 +232,7 @@ class YOLOV5Base:
         """
         if weights:
             import yolov5.models as models  # noqa
+
             checkpoint = torch.load(weights)
         else:
             raise Exception("Need weights for inference.")
