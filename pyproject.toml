@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pivotal_wildlife"
-version = "0.1.1"
+version = "0.1.2"
 description = "a PyTorch Collaborative Deep Learning Framework for Conservation with a Pivotal twist"
 authors = ["Jack Edney <jack.edney@pivotal.earth>"]
 license = "MIT"
