@@ -1,18 +1,15 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-"""YoloV5 base detector class."""
+"""YoloV5 base detector class."""  # Importing basic libraries import numpy as np from tqdm import tqdm import supervision as sv import torch from torch.hub import load_state_dict_from_url
 
-# Importing basic libraries
-
-import numpy as np
-from tqdm import tqdm
-import supervision as sv
-import torch
-from torch.hub import load_state_dict_from_url
 from typing import Any, Dict, Optional
 import time
 import torchvision
+import torch
+import numpy as np
+from tqdm import tqdm
+import supervision as sv
 
 
 def clip_coords(boxes, shape):
@@ -205,7 +202,7 @@ class YOLOV5Base:
     CLASS_NAMES: Optional[dict] = None
     TRANSFORM = None
 
-    def __init__(self, weights=None, device="cpu", url=None):
+    def __init__(self, weights=None, device="cpu"):
         """
         Initialize the YOLO V5 detector.
 
@@ -214,14 +211,12 @@ class YOLOV5Base:
                 Path to the model weights. Defaults to None.
             device (str, optional):
                 Device for model inference. Defaults to "cpu".
-            url (str, optional):
-                URL to fetch the model weights. Defaults to None.
         """
         self.device = device
-        model = self._load_model(weights, self.device, url)
+        model = self._load_model(weights, self.device)
         self.model = model.to(self.device)
 
-    def _load_model(self, weights=None, device="cpu", url=None):
+    def _load_model(self, weights=None, device="cpu"):
         """
         Load the YOLO V5 model weights.
 
@@ -236,9 +231,8 @@ class YOLOV5Base:
             Exception: If weights are not provided.
         """
         if weights:
+            import yolov5.models as models  # noqa
             checkpoint = torch.load(weights)
-        elif url:
-            checkpoint = load_state_dict_from_url(url)
         else:
             raise Exception("Need weights for inference.")
         return (

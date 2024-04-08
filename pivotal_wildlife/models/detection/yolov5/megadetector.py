@@ -23,22 +23,13 @@ class MegaDetectorV5(YOLOV5Base):
     STRIDE = 64
     CLASS_NAMES = {0: "animal", 1: "person", 2: "vehicle"}
 
-    def __init__(self, weights=None, device="cpu", pretrained=True):
+    def __init__(self, weights=None, device="cpu"):
         """
         Initializes the MegaDetectorV5 model with the option to load pretrained weights.
 
         Args:
             weights (str, optional): Path to the weights file.
             device (str, optional): Device to load the model on (e.g., "cpu" or "cuda"). Default is "cpu".
-            pretrained (bool, optional): Whether to load the pretrained model. Default is True.
         """
 
-        if pretrained:
-            url = "https://zenodo.org/records/10023414/files/MegaDetector_v5b.0.0.pt?download=1"
-        else:
-            url = None
-
-        super(MegaDetectorV5, self).__init__(weights=weights, device=device, url=url)
-
-
-# %%
+        super(MegaDetectorV5, self).__init__(weights=weights, device=device)
