@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-""" Post-processing functions."""
+"""Post-processing functions."""
 
 import os
 import numpy as np
