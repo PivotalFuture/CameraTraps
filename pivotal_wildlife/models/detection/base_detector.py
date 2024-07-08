@@ -192,7 +192,7 @@ class YOLOV8Base(BaseDetector):
         assert self.CLASS_NAMES is not None, "CLASS_NAMES not defined"
         results_ = []
         for detection in results["detections"]:
-            assert len(detection) == 5, f"Detection length is {len(detection)}"
+            assert len(detection) >= 5, f"Detection length is {len(detection)}"
             results_.append(
                 (
                     detection[0][0],
