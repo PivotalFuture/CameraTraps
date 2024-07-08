@@ -211,8 +211,8 @@ class YOLOV8Base(BaseDetector):
         Perform detection on a single image.
 
         Args:
-            img_path (str):
-                Image path or identifier.
+            img_path (torch.Tensor):
+                an image tensor.
             conf_thres (float, optional):
                 Confidence threshold for predictions. Defaults to 0.2.
             id_strip (str, optional):
@@ -221,9 +221,10 @@ class YOLOV8Base(BaseDetector):
         Returns:
             dict: Detection results.
         """
+
         self.predictor.args.batch = 1
         self.predictor.args.conf = conf_thres
-        det_results = list(self.predictor.stream_inference([img_path]))
+        det_results = list(self.predictor.stream_inference(img_path))
         return self.results_generation(det_results[0], img_path, id_strip)
 
     def batch_image_detection(
