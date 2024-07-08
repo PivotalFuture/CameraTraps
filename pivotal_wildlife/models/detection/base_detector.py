@@ -192,7 +192,7 @@ class YOLOV8Base(BaseDetector):
         assert self.CLASS_NAMES is not None, "CLASS_NAMES not defined"
         results_ = []
         for detection in results["detections"]:
-            assert len(detection) == 5
+            assert len(detection) == 5, f"Detection length is {len(detection)}"
             results_.append(
                 (
                     detection[0][0],
@@ -206,12 +206,12 @@ class YOLOV8Base(BaseDetector):
 
         return results
 
-    def single_image_detection(self, img_path=None, conf_thres=0.2, id_strip=None):
+    def single_image_detection(self, img=None, conf_thres=0.2, id_strip=None):
         """
         Perform detection on a single image.
 
         Args:
-            img_path (torch.Tensor):
+            img (torch.Tensor):
                 an image tensor.
             conf_thres (float, optional):
                 Confidence threshold for predictions. Defaults to 0.2.
@@ -224,8 +224,9 @@ class YOLOV8Base(BaseDetector):
 
         self.predictor.args.batch = 1
         self.predictor.args.conf = conf_thres
-        det_results = list(self.predictor.stream_inference(img_path))
-        return self.results_generation(det_results[0], img_path, id_strip)
+        assert isinstance(img, torch.Tensor), "Input image must be a torch.Tensor"
+        det_results = list(self.predictor.stream_inference(img.unsqueeze(0)))
+        return self.results_generation(det_results[0], img, id_strip)
 
     def batch_image_detection(
         self, data_path, batch_size=16, conf_thres=0.2, id_strip=None, extension="JPG"
