@@ -1,1 +1,2 @@
-from .yolov5 import *
+from .base_detector import *
+from .megadetectorv5 import *

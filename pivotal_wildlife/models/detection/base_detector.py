@@ -1,15 +1,262 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-"""YoloV5 base detector class."""  # Importing basic libraries import numpy as np from tqdm import tqdm import supervision as sv import torch from torch.hub import load_state_dict_from_url
 
-from typing import Any, Dict, Optional
+import os
+from glob import glob
+import supervision as sv
+from ultralytics.models import yolo
+
+from typing import Any, Dict, Optional, List
 import time
 import torchvision
 import torch
 import numpy as np
 from tqdm import tqdm
-import supervision as sv
+
+
+class BaseDetector:
+    """
+    Base detector class. This class provides utility methods for
+    loading the model, generating results, and performing single and batch image detections.
+    """
+
+    # Placeholder class-level attributes to be defined in derived classes
+    IMAGE_SIZE = None
+    STRIDE = None
+    CLASS_NAMES = None
+    TRANSFORM = None
+
+    def __init__(self, weights=None, device="cpu", url=None):
+        """
+        Initialize the base detector.
+
+        Args:
+            weights (str, optional):
+                Path to the model weights. Defaults to None.
+            device (str, optional):
+                Device for model inference. Defaults to "cpu".
+            url (str, optional):
+                URL to fetch the model weights. Defaults to None.
+        """
+        self.model = None
+        self.device = device
+        self._load_model(weights, self.device, url)
+
+    def _load_model(self, weights=None, device="cpu", url=None):
+        """
+        Load model weights.
+
+        Args:
+            weights (str, optional):
+                Path to the model weights. Defaults to None.
+            device (str, optional):
+                Device for model inference. Defaults to "cpu".
+            url (str, optional):
+                URL to fetch the model weights. Defaults to None.
+        Raises:
+            Exception: If weights are not provided.
+        """
+        pass
+
+    def results_generation(self, preds, img_id, id_strip=None):
+        """
+        Generate results for detection based on model predictions.
+
+        Args:
+            preds (numpy.ndarray):
+                Model predictions.
+            img_id (str):
+                Image identifier.
+            id_strip (str, optional):
+                Strip specific characters from img_id. Defaults to None.
+
+        Returns:
+            dict: Dictionary containing image ID, detections, and labels.
+        """
+        pass
+
+    def single_image_detection(
+        self, img, img_size=None, img_path=None, conf_thres=0.2, id_strip=None
+    ):
+        """
+        Perform detection on a single image.
+
+        Args:
+            img (torch.Tensor):
+                Input image tensor.
+            img_size (tuple):
+                Original image size.
+            img_path (str):
+                Image path or identifier.
+            conf_thres (float, optional):
+                Confidence threshold for predictions. Defaults to 0.2.
+            id_strip (str, optional):
+                Characters to strip from img_id. Defaults to None.
+
+        Returns:
+            dict: Detection results.
+        """
+        pass
+
+    def batch_image_detection(self, dataloader, conf_thres=0.2, id_strip=None):
+        """
+        Perform detection on a batch of images.
+
+        Args:
+            dataloader (DataLoader):
+                DataLoader containing image batches.
+            conf_thres (float, optional):
+                Confidence threshold for predictions. Defaults to 0.2.
+            id_strip (str, optional):
+                Characters to strip from img_id. Defaults to None.
+
+        Returns:
+            list: List of detection results for all images.
+        """
+        pass
+
+
+class YOLOV8Base(BaseDetector):
+    """
+    Base detector class for the new ultralytics YOLOV8 framework. This class provides utility methods for
+    loading the model, generating results, and performing single and batch image detections.
+    This base detector class is also compatible with all the new ultralytics models including YOLOV9,
+    RTDetr, and more.
+    """
+
+    def __init__(self, weights=None, device="cpu", url=None):
+        """
+        Initialize the YOLOV8 detector.
+
+        Args:
+            weights (str, optional):
+                Path to the model weights. Defaults to None.
+            device (str, optional):
+                Device for model inference. Defaults to "cpu".
+            url (str, optional):
+                URL to fetch the model weights. Defaults to None.
+        """
+        super(YOLOV8Base, self).__init__(weights=weights, device=device, url=url)
+
+    def _load_model(self, weights=None, device="cpu", url=None):
+        """
+        Load the YOLOV8 model weights.
+
+        Args:
+            weights (str, optional):
+                Path to the model weights. Defaults to None.
+            device (str, optional):
+                Device for model inference. Defaults to "cpu".
+            url (str, optional):
+                URL to fetch the model weights. Defaults to None.
+        Raises:
+            Exception: If weights are not provided.
+        """
+
+        self.predictor = yolo.detect.DetectionPredictor()
+        # self.predictor.args.device = device # Will uncomment later
+        self.predictor.args.imgsz = self.IMAGE_SIZE
+        self.predictor.args.save = False  # Will see if we want to use ultralytics native inference saving functions.
+
+        if weights:
+            self.predictor.setup_model(weights)
+        elif url:
+            raise Exception("URL weights loading not ready for beta testing.")
+        else:
+            raise Exception("Need weights for inference.")
+
+    def results_generation(self, preds, img_id, id_strip=None):
+        """
+        Generate results for detection based on model predictions.
+
+        Args:
+            preds (ultralytics.engine.results.Results):
+                Model predictions.
+            img_id (str):
+                Image identifier.
+            id_strip (str, optional):
+                Strip specific characters from img_id. Defaults to None.
+
+        Returns:
+            dict: Dictionary containing image ID, detections, and labels.
+        """
+        xyxy = preds.boxes.xyxy.cpu().numpy()
+        confidence = preds.boxes.conf.cpu().numpy()
+        class_id = preds.boxes.cls.cpu().numpy().astype(int)
+
+        results: Dict[str, Any] = {"img_id": str(img_id).strip(id_strip)}
+        results["detections"] = sv.Detections(
+            xyxy=xyxy, confidence=confidence, class_id=class_id
+        )
+        assert self.CLASS_NAMES is not None, "CLASS_NAMES not defined"
+        results_ = []
+        for detection in results["detections"]:
+            assert len(detection) == 5
+            results_.append(
+                (
+                    detection[0][0],
+                    detection[0][1],
+                    detection[1],
+                    detection[2],
+                    detection[3],
+                    detection[4],
+                )
+            )
+
+        return results
+
+    def single_image_detection(self, img_path=None, conf_thres=0.2, id_strip=None):
+        """
+        Perform detection on a single image.
+
+        Args:
+            img_path (str):
+                Image path or identifier.
+            conf_thres (float, optional):
+                Confidence threshold for predictions. Defaults to 0.2.
+            id_strip (str, optional):
+                Characters to strip from img_id. Defaults to None.
+
+        Returns:
+            dict: Detection results.
+        """
+        self.predictor.args.batch = 1
+        self.predictor.args.conf = conf_thres
+        det_results = list(self.predictor.stream_inference([img_path]))
+        return self.results_generation(det_results[0], img_path, id_strip)
+
+    def batch_image_detection(
+        self, data_path, batch_size=16, conf_thres=0.2, id_strip=None, extension="JPG"
+    ):
+        """
+        Perform detection on a batch of images.
+
+        Args:
+            data_path (str):
+                Path containing all images for inference.
+            batch_size (int, optional):
+                Batch size for inference. Defaults to 16.
+            conf_thres (float, optional):
+                Confidence threshold for predictions. Defaults to 0.2.
+            id_strip (str, optional):
+                Characters to strip from img_id. Defaults to None.
+            extension (str, optional):
+                Image extension to search for. Defaults to "JPG"
+
+        Returns:
+            list: List of detection results for all images.
+        """
+        self.predictor.args.batch = batch_size
+        self.predictor.args.conf = conf_thres
+        img_list = glob(
+            os.path.join(data_path, "**/*.{}".format(extension)), recursive=True
+        )
+        det_results = list(self.predictor.stream_inference(img_list))
+        results = []
+        for idx, preds in enumerate(det_results):
+            results.append(self.results_generation(preds, img_list[idx], id_strip))
+        return results
 
 
 def clip_coords(boxes, shape):
@@ -90,7 +337,7 @@ def non_max_suppression(
     multi_label=False,
     labels=(),
     max_det=300,
-):
+) -> List[torch.Tensor]:
     """Non-Maximum Suppression (NMS) on inference results to reject overlapping bounding boxes
 
     Returns:
@@ -119,7 +366,7 @@ def non_max_suppression(
     merge = False  # use merge-NMS
 
     t = time.time()
-    output = [torch.zeros((0, 6), device=prediction.device)] * bs
+    output: List[torch.Tensor] = [torch.zeros((0, 6), device=prediction.device)] * bs
     for xi, x in enumerate(prediction):  # image index, image inference
         # Apply constraints
         # x[((x[..., 2:4] < min_wh) | (x[..., 2:4] > max_wh)).any(1), 4] = 0  # width-height
@@ -150,6 +397,8 @@ def non_max_suppression(
             x = torch.cat((box[i], x[i, j + 5, None], j[:, None].float()), 1)
         else:  # best class only
             conf, j = x[:, 5:].max(1, keepdim=True)
+            assert isinstance(conf, torch.Tensor)
+            assert isinstance(box, torch.Tensor)
             x = torch.cat((box, conf, j.float()), 1)[conf.view(-1) > conf_thres]
 
         # Filter by class
@@ -293,11 +542,12 @@ class YOLOV5Base:
             ).shape  # We need hwc instead of chw for coord scaling
         preds = self.model(img.unsqueeze(0).to(self.device))[0]
         preds = torch.cat(
-            non_max_suppression(prediction=preds, conf_thres=conf_thres), axis=0
+            non_max_suppression(prediction=preds, conf_thres=conf_thres), dim=0
         )
         preds[:, :4] = scale_coords(
             [self.IMAGE_SIZE] * 2, preds[:, :4], img_size
         ).round()
+
         return self.results_generation(preds.cpu().numpy(), img_path, id_strip)
 
     def batch_image_detection(self, dataloader, conf_thres=0.2, id_strip=None):
