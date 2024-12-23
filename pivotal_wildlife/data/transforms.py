@@ -15,7 +15,6 @@ __all__ = ["MegaDetector_v5_Transform", "Classification_Inference_Transform"]
 def letterbox(
     im,
     new_shape=(640, 640),
-    color=(114, 114, 114),
     auto=False,
     scaleFill=False,
     scaleup=True,
@@ -116,13 +115,17 @@ class MegaDetector_v5_Transform:
         Applies the transformation on the provided image.
 
         Args:
-            np_img (np.ndarray): Input image as a numpy array.
+            np_img (np.ndarray): Input image as a numpy array or PIL Image.
 
         Returns:
             torch.Tensor: Transformed image.
         """
-        # Resize and pad the image using the letterbox function
-        img = letterbox(np_img, new_shape=self.target_size, stride=self.stride, auto=False)[0]
+        # Convert the image to a PyTorch tensor and normalize it
+        if isinstance(np_img, np.ndarray):
+            np_img = np_img.transpose((2, 0, 1))
+            np_img = np.ascontiguousarray(np_img)
+            np_img = torch.from_numpy(np_img).float()
+            np_img /= 255.0
 
         # Resize and pad the image using a customized letterbox function.
         img = letterbox(
