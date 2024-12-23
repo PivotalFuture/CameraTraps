@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-from yolov5_base import YOLOV5Base
+from .yolov5_base import YOLOV5Base
 from typing import Literal
 
 __all__ = ["MegaDetectorV5"]
