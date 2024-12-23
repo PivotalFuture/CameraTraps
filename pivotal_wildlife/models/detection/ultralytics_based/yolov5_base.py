@@ -50,9 +50,9 @@ class YOLOV5Base(BaseDetector):
         url: Optional[str] = None,
     ) -> None:
         if weights:
-            checkpoint = torch.load(weights, map_location=device)
+            checkpoint = torch.load(weights, map_location="cpu")
         elif url:
-            checkpoint = load_state_dict_from_url(url, map_location=device)
+            checkpoint = load_state_dict_from_url(url, map_location="cpu")
         else:
             raise Exception("Need weights for inference.")
 
