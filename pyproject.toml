@@ -1,6 +1,6 @@
 [project]
 name = "pivotal-wildlife"
-version = "0.1.2"
+version = "0.2.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -19,8 +19,4 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = [
-    "pyright>=1.1.391",
-    "pytest>=8.3.4",
-    "ruff>=0.8.4",
-]
+dev = ["pyright>=1.1.391", "pytest>=8.3.4", "ruff>=0.8.4"]
