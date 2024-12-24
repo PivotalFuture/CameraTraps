@@ -9,3 +9,4 @@ PytorchWildlife.egg-info/
 *test*
 *setup/*
 *dist/*
+.DS_Store

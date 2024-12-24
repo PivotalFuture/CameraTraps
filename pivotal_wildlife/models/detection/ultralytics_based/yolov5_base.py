@@ -72,7 +72,7 @@ class YOLOV5Base(BaseDetector):
         results: List[DetectionResult] = []
 
         if len(preds) > 0 and self.CLASS_NAMES is not None:
-            if preds.size > 0:  # Check if array is not empty
+            if preds.size > 0:
                 detections = Detections(
                     xyxy=preds[:, :4].astype(np.float32),
                     confidence=preds[:, 4].astype(np.float32),
@@ -81,13 +81,13 @@ class YOLOV5Base(BaseDetector):
                 if detections.confidence is None or detections.class_id is None:
                     raise ValueError("Invalid detections")
 
-                detection_result = DetectionResult(
-                    bbox=detections.xyxy[0].tolist(),
-                    confidence=detections.confidence[0],
-                    label=self.CLASS_NAMES[detections.class_id[0]],
-                )
-
-                results.append(detection_result)
+                for i in range(len(detections.confidence)):
+                    detection_result = DetectionResult(
+                        bbox=detections.xyxy[i].tolist(),
+                        confidence=detections.confidence[i],
+                        label=self.CLASS_NAMES[detections.class_id[i]],
+                    )
+                    results.append(detection_result)
 
         return results
 

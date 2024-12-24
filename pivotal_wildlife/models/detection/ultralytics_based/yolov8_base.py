@@ -74,6 +74,10 @@ class YOLOV8Base(BaseDetector):
                 target_size=self.IMAGE_SIZE, stride=self.STRIDE
             )
 
+        if hasattr(self.predictor, "model"):
+            assert isinstance(self.predictor.model, torch.nn.Module)
+            self.predictor.model = self.predictor.model.float()
+
         self.predictor.device = device
 
     def _process_boxes(

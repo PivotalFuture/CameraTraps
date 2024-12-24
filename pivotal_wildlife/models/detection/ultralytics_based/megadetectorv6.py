@@ -11,9 +11,12 @@ class MegaDetectorV6(YOLOV8Base):
 
     Attributes:
         CLASS_NAMES (dict): Mapping of class IDs to their respective names.
+        IMAGE_SIZE (int): The standard image size used during training.
+        STRIDE (int): Stride value used in the detector.
     """
 
     CLASS_NAMES = ["animal", "person", "vehicle"]
+    STRIDE = 32  # Added STRIDE attribute
 
     def __init__(
         self,
@@ -23,7 +26,7 @@ class MegaDetectorV6(YOLOV8Base):
         version: Literal["yolov9c", "rtdetrl"] | None = "yolov9c",
     ):
         """
-        Initializes the MegaDetectorV5 model with the option to load pretrained weights.
+        Initializes the MegaDetectorV6 model with the option to load pretrained weights.
 
         Args:
             weights (str, optional): Path to the weights file.
@@ -41,7 +44,6 @@ class MegaDetectorV6(YOLOV8Base):
                 url = None
             else:
                 raise ValueError("Select a valid model version: yolov9c or rtdetrl")
-
         else:
             url = None
 

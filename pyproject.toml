@@ -1,21 +1,23 @@
 [project]
 name = "pivotal-wildlife"
-version = "0.3.3"
+version = "0.3.4"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "chardet>=5.2.0",
     "gradio>=5.9.1",
-    "numpy>=2.2.1",
+    "numpy>=1.26.0",
     "pillow>=11.0.0",
     "supervision>=0.25.1",
-    "torch>=2.5.1",
-    "torchvision>=0.20.1",
+    "torch>=2.2.0",
+    "torchvision>=0.17.0",
     "tqdm>=4.67.1",
     "ultralytics>=8.3.23",
     "ultralytics-yolov5>=0.1.1",
     "wget>=3.2",
+    "opencv-python>=4.8.0",      # Added for image processing
+    "scikit-learn>=1.4.0",       # Added for potential ML utilities
 ]
 
 [dependency-groups]
