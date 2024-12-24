@@ -36,7 +36,7 @@ class YOLOV8Base(BaseDetector):
         transform: Optional[Callable] = None,
     ) -> None:
         self.transform = transform
-        super().__init__(weights=weights, device=device, url=url)
+        super().__init__(weights=weights, device="cpu", url=url)
         self.load_model(weights, device, url)
 
     def load_model(

@@ -1,4 +1,5 @@
 from .yolov8_base import YOLOV8Base
+from typing import Literal
 
 __all__ = ["MegaDetectorV6"]
 
@@ -19,7 +20,7 @@ class MegaDetectorV6(YOLOV8Base):
         weights: str | None = None,
         device: str = "cpu",
         pretrained: bool | None = True,
-        version: str | None = "yolov9c",
+        version: Literal["yolov9c", "rtdetrl"] | None = "yolov9c",
     ):
         """
         Initializes the MegaDetectorV5 model with the option to load pretrained weights.
