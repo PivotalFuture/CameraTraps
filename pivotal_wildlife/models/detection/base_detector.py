@@ -2,16 +2,20 @@
 """Base detector class."""
 
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, List, Union, Tuple, Any, TypeVar
+from typing import Optional, List, Union, Tuple, Any, TypeVar
+from dataclasses import dataclass
 import numpy as np
 from torch import nn
 from ultralytics.engine.results import Results
-from supervision.detection.core import Detections
 
 R = TypeVar("R", Results, np.ndarray)
-DetectionResult = Dict[
-    str, Union[str, Detections, List[str], List[List[float]], np.ndarray]
-]
+
+
+@dataclass
+class DetectionResult:
+    bbox: Tuple[float, float, float, float]
+    confidence: float
+    label: str
 
 
 class BaseDetector(nn.Module, ABC):
@@ -44,8 +48,9 @@ class BaseDetector(nn.Module, ABC):
 
     @abstractmethod
     def results_generation(
-        self, preds: R, img_id: str, id_strip: Optional[str] = None
-    ) -> DetectionResult:
+        self,
+        preds: R,
+    ) -> List[DetectionResult]:
         raise NotImplementedError
 
     @abstractmethod
@@ -54,9 +59,7 @@ class BaseDetector(nn.Module, ABC):
         img: Union[str, np.ndarray],
         det_conf_thres: float = 0.2,
         img_path: Optional[str] = None,
-        img_size: Optional[Tuple[int, int]] = None,
-        id_strip: Optional[str] = None,
-    ) -> DetectionResult:
+    ) -> List[DetectionResult]:
         raise NotImplementedError
 
     @abstractmethod
@@ -65,6 +68,5 @@ class BaseDetector(nn.Module, ABC):
         data_path: str,
         batch_size: int = 16,
         det_conf_thres: float = 0.2,
-        id_strip: Optional[str] = None,
-    ) -> List[DetectionResult]:
+    ) -> List[List[DetectionResult]]:
         raise NotImplementedError

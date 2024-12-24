@@ -11,7 +11,6 @@ from ultralytics.models import yolo
 from ultralytics.engine.results import Results
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-import supervision.detection.core as sv_core
 
 from ..base_detector import BaseDetector, DetectionResult
 from ....data import transforms as pw_trans
@@ -75,6 +74,8 @@ class YOLOV8Base(BaseDetector):
                 target_size=self.IMAGE_SIZE, stride=self.STRIDE
             )
 
+        self.predictor.device = device
+
     def _process_boxes(
         self, preds: Results
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -93,26 +94,24 @@ class YOLOV8Base(BaseDetector):
         return xyxy, confidence, class_id.astype(int)
 
     def results_generation(
-        self, preds: Results, img_id: str, id_strip: Optional[str] = None
-    ) -> DetectionResult:
+        self,
+        preds: Results,
+    ) -> List[DetectionResult]:
         if preds.boxes is None:
-            return {"img_id": str(img_id).strip(id_strip) if id_strip else str(img_id)}
+            return []
 
         xyxy, confidence, class_id = self._process_boxes(preds)
-
-        results: DetectionResult = {
-            "img_id": str(img_id).strip(id_strip) if id_strip else str(img_id)
-        }
+        results: List[DetectionResult] = []
 
         if self.CLASS_NAMES is not None:
-            detections = sv_core.Detections(
-                xyxy=xyxy, confidence=confidence, class_id=class_id
-            )
-            results["detections"] = detections
-            results["labels"] = [
-                f"{self.CLASS_NAMES[cls]} {conf:0.2f}"
-                for conf, cls in zip(confidence, class_id)
-            ]
+            for conf, cls, box in zip(confidence, class_id, xyxy):
+                results.append(
+                    DetectionResult(
+                        bbox=box.tolist(),
+                        confidence=conf,
+                        label=f"{self.CLASS_NAMES[cls]} {conf:0.2f}",
+                    )
+                )
 
         return results
 
@@ -121,9 +120,7 @@ class YOLOV8Base(BaseDetector):
         img: Union[str, np.ndarray],
         det_conf_thres: float = 0.2,
         img_path: Optional[str] = None,
-        img_size: Optional[Tuple[int, int]] = None,
-        id_strip: Optional[str] = None,
-    ) -> DetectionResult:
+    ) -> List[DetectionResult]:
         if isinstance(img, str):
             if img_path is None:
                 img_path = img
@@ -134,15 +131,14 @@ class YOLOV8Base(BaseDetector):
         det_results = list(self.predictor.stream_inference([img]))
         result = cast(Results, det_results[0])
 
-        return self.results_generation(result, img_path or "", id_strip)
+        return self.results_generation(result)
 
     def batch_image_detection(
         self,
         data_path: str,
         batch_size: int = 16,
         det_conf_thres: float = 0.2,
-        id_strip: Optional[str] = None,
-    ) -> List[DetectionResult]:
+    ) -> List[List[DetectionResult]]:
         self.predictor.args.batch = batch_size
         self.predictor.args.conf = det_conf_thres
 
@@ -156,23 +152,29 @@ class YOLOV8Base(BaseDetector):
             drop_last=False,
         )
 
-        results: List[DetectionResult] = []
+        results: List[List[DetectionResult]] = []
         with tqdm(total=len(loader)) as pbar:
             for _, (_, paths, _) in enumerate(loader):
                 det_results = self.predictor.stream_inference(paths)
-                for idx, preds in enumerate(det_results):
+
+                for preds in det_results:
                     preds = cast(Results, preds)
-                    res = self.results_generation(preds, paths[idx], id_strip)
-                    if "detections" in res and isinstance(
-                        res["detections"], sv_core.Detections
-                    ):
-                        size = preds.orig_shape
-                        normalized_coords = [
-                            [x1 / size[1], y1 / size[0], x2 / size[1], y2 / size[0]]
-                            for x1, y1, x2, y2 in res["detections"].xyxy
-                        ]
-                        res["normalized_coords"] = normalized_coords
-                    results.append(res)
+                    size = preds.orig_shape
+                    result = self.results_generation(preds)
+
+                    for idx, res in enumerate(result):
+                        bbox = res.bbox
+                        bbox = (
+                            bbox[0] / size[1],
+                            bbox[1] / size[0],
+                            bbox[2] / size[1],
+                            bbox[3] / size[0],
+                        )
+                        res.bbox = bbox
+                        result[idx] = res
+
+                    results.append(result)
+
                 pbar.update(1)
 
         return results

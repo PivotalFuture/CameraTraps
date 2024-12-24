@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
+
 """YoloV5 base detector class."""
 
 from typing import Optional, List, Union, Tuple, Any, Callable
@@ -67,12 +68,8 @@ class YOLOV5Base(BaseDetector):
                 target_size=self.IMAGE_SIZE, stride=self.STRIDE
             )
 
-    def results_generation(
-        self, preds: np.ndarray, img_id: str, id_strip: Optional[str] = None
-    ) -> DetectionResult:
-        results: DetectionResult = {
-            "img_id": str(img_id).strip(id_strip) if id_strip else str(img_id)
-        }
+    def results_generation(self, preds: np.ndarray) -> List[DetectionResult]:
+        results: List[DetectionResult] = []
 
         if len(preds) > 0 and self.CLASS_NAMES is not None:
             if preds.size > 0:  # Check if array is not empty
@@ -84,14 +81,13 @@ class YOLOV5Base(BaseDetector):
                 if detections.confidence is None or detections.class_id is None:
                     raise ValueError("Invalid detections")
 
-                results["detections"] = detections
+                detection_result = DetectionResult(
+                    bbox=detections.xyxy[0].tolist(),
+                    confidence=detections.confidence[0],
+                    label=self.CLASS_NAMES[detections.class_id[0]],
+                )
 
-                results["labels"] = [
-                    f"{self.CLASS_NAMES[class_id]} {confidence:0.2f}"
-                    for confidence, class_id in zip(
-                        detections.confidence, detections.class_id
-                    )
-                ]
+                results.append(detection_result)
 
         return results
 
@@ -100,9 +96,7 @@ class YOLOV5Base(BaseDetector):
         img: Union[str, np.ndarray],
         det_conf_thres: float = 0.2,
         img_path: Optional[str] = None,
-        img_size: Optional[Tuple[int, int]] = None,
-        id_strip: Optional[str] = None,
-    ) -> DetectionResult:
+    ) -> List[DetectionResult]:
         if isinstance(img, str):
             if img_path is None:
                 img_path = img
@@ -112,7 +106,7 @@ class YOLOV5Base(BaseDetector):
             raise ValueError("Transform not initialized")
 
         transformed_img = self.transform(img)
-        curr_img_size = img_size if img_size else img.shape
+        curr_img_size = img.shape
 
         with torch.no_grad():
             preds = self.model(transformed_img.unsqueeze(0).to(self.device))[0]
@@ -127,17 +121,16 @@ class YOLOV5Base(BaseDetector):
                 preds_np[:, :4],
                 curr_img_size,
             ).round()
-            return self.results_generation(preds_np, img_path or "", id_strip)
+            return self.results_generation(preds_np)
 
-        return {"img_id": str(img_path or "")}
+        return []
 
     def batch_image_detection(
         self,
         data_path: str,
         batch_size: int = 16,
         det_conf_thres: float = 0.2,
-        id_strip: Optional[str] = None,
-    ) -> List[DetectionResult]:
+    ) -> List[List[DetectionResult]]:
         dataset = pw_data.DetectionImageFolder(
             data_path,
             transform=self.transform,
@@ -152,9 +145,9 @@ class YOLOV5Base(BaseDetector):
             drop_last=False,
         )
 
-        results: List[DetectionResult] = []
+        results: List[List[DetectionResult]] = []
         with tqdm(total=len(loader)) as pbar:
-            for _, (imgs, paths, sizes) in enumerate(loader):
+            for imgs, _, sizes in loader:
                 imgs = imgs.to(self.device)
                 with torch.no_grad():
                     predictions = self.model(imgs)[0]
@@ -164,12 +157,11 @@ class YOLOV5Base(BaseDetector):
 
                 for i, pred in enumerate(predictions):
                     if pred.size(0) == 0:
-                        results.append({"img_id": str(paths[i])})
+                        results.append([])
                         continue
 
                     pred_np = pred.cpu().numpy()
                     size = sizes[i].numpy()
-                    path = paths[i]
 
                     pred_np[:, :4] = scale_coords(
                         [self.IMAGE_SIZE] * 2
@@ -179,11 +171,17 @@ class YOLOV5Base(BaseDetector):
                         size,
                     ).round()
 
-                    result = self.results_generation(pred_np, path, id_strip)
-                    result["normalized_coords"] = [
-                        [x1 / size[1], y1 / size[0], x2 / size[1], y2 / size[0]]
-                        for x1, y1, x2, y2 in pred_np[:, :4]
-                    ]
+                    result = self.results_generation(pred_np)
+                    for idx, res in enumerate(result):
+                        bbox = res.bbox
+                        bbox = (
+                            bbox[0] / size[1],
+                            bbox[1] / size[0],
+                            bbox[2] / size[1],
+                            bbox[3] / size[0],
+                        )
+                        res.bbox = bbox
+                        result[idx] = res
                     results.append(result)
                 pbar.update(1)
 
