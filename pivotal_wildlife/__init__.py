@@ -1,7 +1,7 @@
-from models.detection.ultralytics_based.megadetectorv5 import (
+from .models.detection.ultralytics_based.megadetectorv5 import (
     MegaDetectorV5,
 )
-from models.detection.ultralytics_based.megadetectorv6 import (
+from .models.detection.ultralytics_based.megadetectorv6 import (
     MegaDetectorV6,
 )
 
