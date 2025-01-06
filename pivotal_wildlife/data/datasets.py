@@ -7,6 +7,7 @@ import numpy as np
 import supervision as sv
 import torch
 from torch.utils.data import Dataset
+from typing import Tuple
 
 # Making the DetectionImageFolder class available for import from this module
 __all__ = [
@@ -37,6 +38,26 @@ def has_file_allowed_extension(filename: str, extensions: tuple) -> bool:
 def is_image_file(filename: str) -> bool:
     """Checks if a file is an allowed image extension."""
     return has_file_allowed_extension(filename, IMG_EXTENSIONS)
+
+
+class DetectionImageTuple(Dataset):
+    def __init__(self, batch: Tuple[np.ndarray, ...], transform=None):
+        super(DetectionImageTuple, self).__init__()
+        self.batch = batch
+        self.transform = transform
+
+    def __getitem__(self, idx):
+        img = self.batch[idx]
+
+        img_size_ori = img.size[::-1]
+
+        if self.transform:
+            img = self.transform(img)
+
+        return img, None, torch.tensor(img_size_ori)
+
+    def __len__(self):
+        return len(self.batch)
 
 
 class DetectionImageFolder(Dataset):

@@ -127,14 +127,21 @@ class YOLOV5Base(BaseDetector):
 
     def batch_image_detection(
         self,
-        data_path: str,
+        batch: Tuple[np.ndarray, ...] | str,
         batch_size: int = 16,
         det_conf_thres: float = 0.2,
     ) -> List[List[DetectionResult]]:
-        dataset = pw_data.DetectionImageFolder(
-            data_path,
-            transform=self.transform,
-        )
+        if isinstance(batch, str):
+            dataset = pw_data.DetectionImageFolder(
+                batch,
+                transform=self.transform,
+            )
+
+        elif isinstance(batch, tuple):
+            dataset = pw_data.DetectionImageTuple(batch, transform=self.transform)
+
+        else:
+            raise ValueError("Invalid input type")
 
         loader = DataLoader(
             dataset,

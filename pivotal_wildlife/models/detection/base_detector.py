@@ -6,9 +6,20 @@ from typing import Optional, List, Union, Tuple, Any, TypeVar
 from dataclasses import dataclass
 import numpy as np
 from torch import nn
+import numpy.typing as npt
 from ultralytics.engine.results import Results
 
-R = TypeVar("R", Results, np.ndarray)
+
+@dataclass
+class FeatureMatch:
+    keypoints1: npt.NDArray[np.float32]
+    keypoints2: npt.NDArray[np.float32]
+    matched_kpts1: Optional[npt.NDArray[np.float32]]
+    matched_kpts2: Optional[npt.NDArray[np.float32]]
+    boxes: List[List[int]]
+
+
+R = TypeVar("R", Results, np.ndarray, FeatureMatch)
 
 
 @dataclass
